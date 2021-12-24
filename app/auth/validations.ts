@@ -1,42 +1,21 @@
 import { z } from "zod"
 
-export const email = z
+export const code = z
   .string()
-  .email()
-  .transform((str) => str.toLowerCase().trim())
+  .length(4, "Room code should be 4 letters long")
+  .regex(/[A-Z]/, "All characters must be uppercase letters")
+  .transform((str) => str.toUpperCase().trim())
 
-export const password = z
+export const name = z
   .string()
-  .min(10)
-  .max(100)
-  .transform((str) => str.trim())
+  .min(1)
+  .max(12)
+  .transform((str) => str.toUpperCase().trim())
+
+export const role = z.enum(["SPECTATOR", "PLAYER", "HOST"])
 
 export const Signup = z.object({
-  email,
-  password,
-})
-
-export const Login = z.object({
-  email,
-  password: z.string(),
-})
-
-export const ForgotPassword = z.object({
-  email,
-})
-
-export const ResetPassword = z
-  .object({
-    password: password,
-    passwordConfirmation: password,
-    token: z.string(),
-  })
-  .refine((data) => data.password === data.passwordConfirmation, {
-    message: "Passwords don't match",
-    path: ["passwordConfirmation"], // set the path of the error
-  })
-
-export const ChangePassword = z.object({
-  currentPassword: z.string(),
-  newPassword: password,
+  code,
+  name,
+  role,
 })

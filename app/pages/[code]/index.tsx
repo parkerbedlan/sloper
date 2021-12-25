@@ -10,12 +10,14 @@ import {
   Text,
   Tooltip,
 } from "@chakra-ui/react"
+import { CloseIcon } from "app/core/components/icons/CloseIcon"
 import { SendIcon } from "app/core/components/icons/SendIcon"
 import { Wrapper } from "app/core/components/Wrapper"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import Layout from "app/core/layouts/Layout"
+import deleteUser from "app/rooms/mutations/deleteUser"
 import getRoom from "app/rooms/queries/getRoom"
-import { BlitzPage, Routes, useParam, useQuery, useRouter } from "blitz"
+import { BlitzPage, Routes, useMutation, useParam, useQuery, useRouter } from "blitz"
 import React, { useEffect, useState } from "react"
 
 const Room: BlitzPage = () => {
@@ -33,7 +35,8 @@ const Room: BlitzPage = () => {
     router.push(Routes.Name({ code }))
   }
 
-  const [room] = useQuery(getRoom, { code })
+  const [room, { refetch: refetchRoom }] = useQuery(getRoom, { code })
+  const [deleteUserMutation] = useMutation(deleteUser)
 
   return (
     <>
@@ -44,9 +47,28 @@ const Room: BlitzPage = () => {
         <hr />
         <Text>Players:</Text>
         {room.players.map((player) => (
-          <Text key={player.id} fontWeight={player.id === currentUser!.id ? "bold" : undefined}>
-            {player.name} {player.role === "HOST" && <i>(Host)</i>}
-          </Text>
+          <Flex key={player.id} alignItems="center">
+            {currentUser?.role === "HOST" && player.id !== currentUser!.id && (
+              <IconButton
+                icon={<CloseIcon color="red" />}
+                aria-label="remove user"
+                size={"xs"}
+                variant={"outline"}
+                colorScheme="red"
+                onClick={async () => {
+                  if (
+                    window.confirm(`Are you sure you want to remove ${player.name} from the room?`)
+                  ) {
+                    await deleteUserMutation({ id: player.id, roomId: room.id })
+                    await refetchRoom()
+                  }
+                }}
+              />
+            )}
+            <Text fontWeight={player.id === currentUser!.id ? "bold" : undefined}>
+              {player.name} {player.role === "HOST" && <i>(Host)</i>}
+            </Text>
+          </Flex>
         ))}
         <hr />
         <Box mt={4}>

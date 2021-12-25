@@ -130,16 +130,4 @@ export const NameField = ({
   )
 }
 
-const MyField = ({
-  name,
-  label,
-  placeholder,
-}: {
-  name: string
-  label?: string
-  placeholder?: string
-}) => {
-  return <></>
-}
-
 export default SignupForm

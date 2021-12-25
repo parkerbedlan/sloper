@@ -4,6 +4,7 @@ import Layout from "app/core/layouts/Layout"
 import { Wrapper } from "app/core/components/Wrapper"
 import {
   Box,
+  Button,
   Flex,
   Icon,
   Input,
@@ -43,17 +44,16 @@ const CreateRoom: BlitzPage = () => {
     const gameType = gameSelections[index]!.gameName as GameType
     const room = await createRoomMutation({ name, gameType })
     router.push(Routes.Room({ code: room.code }))
-    // router.push(`/`)
   }
 
   const [formPartIndex, setFormPartIndex] = useState(0)
   const formParts = [
     <GameSelection
       key={0}
-      onNext={() => setFormPartIndex((i) => i + 1)}
+      onSubmit={() => setFormPartIndex((i) => i + 1)}
       {...{ gameIndex, setGameIndex }}
     />,
-    <NameSelection key={1} {...{ name, setName }} onNext={handleSubmit} />,
+    <NameSelection key={1} {...{ name, setName }} onSubmit={handleSubmit} />,
   ]
 
   return <Wrapper variant="small">{formParts[formPartIndex]}</Wrapper>
@@ -62,11 +62,11 @@ const CreateRoom: BlitzPage = () => {
 const GameSelection = ({
   gameIndex,
   setGameIndex,
-  onNext,
+  onSubmit,
 }: {
   gameIndex: number | undefined
   setGameIndex: React.Dispatch<React.SetStateAction<number | undefined>>
-  onNext: () => void
+  onSubmit: () => void
 }) => {
   const [value, setValue] = useState<number | undefined>(undefined)
 
@@ -75,7 +75,7 @@ const GameSelection = ({
     value: gameIndex,
     onChange: (nextValue) => {
       setGameIndex(parseInt(nextValue))
-      onNext()
+      onSubmit()
     },
   })
 
@@ -103,21 +103,24 @@ const GameSelection = ({
   )
 }
 
-const NameSelection = ({
+export const NameSelection = ({
   name,
   setName,
-  onNext,
+  onSubmit,
 }: {
   name: string
   setName: React.Dispatch<React.SetStateAction<string>>
-  onNext: () => void
+  onSubmit: () => void
 }) => {
   return (
     <>
       <Text fontWeight={"bold"} fontSize={"3xl"} my={4}>
         Pick your name:
       </Text>
-      <NameField {...{ name, setName }} onEnter={onNext} />
+      <NameField {...{ name, setName }} onEnter={onSubmit} />
+      <Flex justifyContent={"flex-end"} m={2}>
+        <Button onClick={onSubmit}>ENTER ROOM</Button>
+      </Flex>
     </>
   )
 }

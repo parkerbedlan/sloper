@@ -10,6 +10,7 @@ const Room: BlitzPage = () => {
 
   const code = useParam("code", "string")!
   if (code) {
+    if (code.length !== 4) router.push(Routes.Home())
     const codeAllCaps = code.toUpperCase()
     if (code !== codeAllCaps) router.push(Routes.Room({ code: codeAllCaps }))
   }

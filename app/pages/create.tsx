@@ -43,6 +43,7 @@ const CreateRoom: BlitzPage = () => {
     const gameType = gameSelections[index]!.gameName as GameType
     const room = await createRoomMutation({ name, gameType })
     router.push(Routes.Room({ code: room.code }))
+    // router.push(`/`)
   }
 
   const [formPartIndex, setFormPartIndex] = useState(0)

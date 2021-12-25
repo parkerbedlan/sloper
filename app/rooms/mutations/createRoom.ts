@@ -1,8 +1,8 @@
 import signup from "app/auth/mutations/signup"
-import { code, name, gameType } from "app/auth/validations"
+import { gameType, name } from "app/auth/validations"
 import { resolver } from "blitz"
 import db from "db"
-import { number, z } from "zod"
+import { z } from "zod"
 
 const CreateRoom = z.object({
   name,
@@ -21,7 +21,7 @@ export default resolver.pipe(resolver.zod(CreateRoom), async ({ name, gameType }
     data: { code: randomCode, gameType, hostId: -1, isFull: false },
   })
 
-  signup({ code: randomCode, name, role: "HOST" }, ctx)
+  await signup({ code: randomCode, name, role: "HOST" }, ctx)
 
   return room
 })

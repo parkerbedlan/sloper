@@ -1,6 +1,7 @@
 import { Box, Button, Flex } from "@chakra-ui/react"
 import SignupForm from "app/auth/components/SignupForm"
 import { Wrapper } from "app/core/components/Wrapper"
+import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import Layout from "app/core/layouts/Layout"
 import { BlitzPage, Routes, useRouter } from "blitz"
 
@@ -11,9 +12,11 @@ import { BlitzPage, Routes, useRouter } from "blitz"
 
 const Home: BlitzPage = () => {
   const router = useRouter()
+  const currentUser = useCurrentUser()
   return (
     <Wrapper variant="small">
       <Flex direction="column">
+        {/* <pre>{JSON.stringify(currentUser, null, 2)}</pre> */}
         <Box borderBottom="1px" py={10}>
           <Flex justifyContent={"center"}>
             <Button w={"80%"} colorScheme={"blue"} onClick={() => router.push(Routes.CreateRoom())}>

@@ -1,10 +1,12 @@
 import { resolver, NotFoundError } from "blitz"
 import db from "db"
 import { z } from "zod"
+import { code } from "app/auth/validations"
 
 const GetRoom = z.object({
   // This accepts type of undefined, but is required at runtime
-  id: z.number().optional().refine(Boolean, "Required"),
+  id: z.number().optional(), //.refine(Boolean, "Required"),
+  code: code.optional(),
 })
 
 export default resolver.pipe(resolver.zod(GetRoom), resolver.authorize(), async ({ id }) => {

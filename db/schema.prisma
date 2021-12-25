@@ -48,4 +48,6 @@ model Room {
   players   User[]
   hostId    Int
   isFull    Boolean
+  // RPS, TTT, PD, CHESS
+  gameType  String
 }

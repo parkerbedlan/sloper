@@ -1,17 +1,30 @@
-import { code, name } from "app/auth/validations"
+import signup from "app/auth/mutations/signup"
+import { code, name, gameType } from "app/auth/validations"
 import { resolver } from "blitz"
 import db from "db"
 import { number, z } from "zod"
 
 const CreateRoom = z.object({
   name,
-  code,
-  hostId: z.number(),
+  gameType,
 })
 
-export default resolver.pipe(resolver.zod(CreateRoom), resolver.authorize(), async (input) => {
-  // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const room = await db.room.create({ data: { ...input, isFull: false } })
+export default resolver.pipe(resolver.zod(CreateRoom), async ({ name, gameType }, ctx) => {
+  let randomCode: string
+  let oldRoom: { id: number } | null
+  do {
+    randomCode = generateRandomCode()
+    oldRoom = await db.room.findFirst({ where: { code: randomCode }, select: { id: true } })
+  } while (oldRoom)
+
+  const room = await db.room.create({
+    data: { code: randomCode, gameType, hostId: -1, isFull: false },
+  })
+
+  signup({ code: randomCode, name, role: "HOST" }, ctx)
 
   return room
 })
+
+const generateRandomCode = () =>
+  [...Array(4)].map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join("")

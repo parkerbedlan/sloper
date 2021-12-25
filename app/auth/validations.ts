@@ -14,6 +14,13 @@ export const name = z
 
 export const role = z.enum(["SPECTATOR", "PLAYER", "HOST"])
 
+export const gameType = z.enum([
+  "Rock Paper Scissors",
+  "Tic Tac Toe",
+  "Prisoner's Dilemma",
+  "Chess",
+])
+
 export const Signup = z.object({
   code,
   name,

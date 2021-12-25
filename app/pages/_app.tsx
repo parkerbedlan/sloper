@@ -9,18 +9,21 @@ import {
 } from "blitz"
 
 import { ChakraProvider } from "@chakra-ui/react"
+import { Suspense } from "react"
 
 export default function App({ Component, pageProps }: AppProps) {
   const getLayout = Component.getLayout || ((page) => page)
 
   return (
     <ChakraProvider>
-      <ErrorBoundary
-        FallbackComponent={RootErrorFallback}
-        onReset={useQueryErrorResetBoundary().reset}
-      >
-        {getLayout(<Component {...pageProps} />)}
-      </ErrorBoundary>
+      <Suspense fallback={<div>Loading...</div>}>
+        <ErrorBoundary
+          FallbackComponent={RootErrorFallback}
+          onReset={useQueryErrorResetBoundary().reset}
+        >
+          {getLayout(<Component {...pageProps} />)}
+        </ErrorBoundary>
+      </Suspense>
     </ChakraProvider>
   )
 }

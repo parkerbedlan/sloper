@@ -1,12 +1,8 @@
-import { Suspense } from "react"
-import { Image, Link, BlitzPage, useMutation, Routes } from "blitz"
-import Layout from "app/core/layouts/Layout"
-import { useCurrentUser } from "app/core/hooks/useCurrentUser"
-import logout from "app/auth/mutations/logout"
-import logo from "public/logo.png"
-import { Wrapper } from "app/core/components/Wrapper"
 import { Box, Button, Flex } from "@chakra-ui/react"
 import SignupForm from "app/auth/components/SignupForm"
+import { Wrapper } from "app/core/components/Wrapper"
+import Layout from "app/core/layouts/Layout"
+import { BlitzPage, Routes, useRouter } from "blitz"
 
 /*
  * This file is just for a pleasant getting started page for your new app.
@@ -14,12 +10,13 @@ import SignupForm from "app/auth/components/SignupForm"
  */
 
 const Home: BlitzPage = () => {
+  const router = useRouter()
   return (
     <Wrapper variant="small">
       <Flex direction="column">
         <Box borderBottom="1px" py={10}>
           <Flex justifyContent={"center"}>
-            <Button w={"80%"} colorScheme={"blue"}>
+            <Button w={"80%"} colorScheme={"blue"} onClick={() => router.push(Routes.CreateRoom())}>
               CREATE ROOM
             </Button>
           </Flex>

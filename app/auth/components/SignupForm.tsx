@@ -86,31 +86,47 @@ export const SignupForm = (props: SignupFormProps) => {
         />
         {errors["code"] && <FormErrorMessage>{errors["code"]}</FormErrorMessage>}
       </FormControl>
-      <FormControl mt={6} isInvalid={!!errors["name"]}>
-        <FormLabel>
-          <Flex justifyContent={"space-between"}>
-            <Text>NAME</Text>
-            <Text>{12 - name.length}</Text>
-          </Flex>
-        </FormLabel>
-        <Input
-          placeholder={"ENTER YOUR NAME"}
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value.toUpperCase().substring(0, 12))
-          }}
-          onKeyPress={(e) => {
-            if (e.key === "Enter") handleSubmit()
-          }}
-        />
-        {errors["name"] && <FormErrorMessage>{errors["name"]}</FormErrorMessage>}
-      </FormControl>
+      <NameField {...{ name, setName }} errorMessage={errors["name"]} onEnter={handleSubmit} />
       <Flex justifyContent={"center"} mt={4}>
         <Button w={"80%"} colorScheme={"blue"} disabled={!isRoomReady} onClick={handleSubmit}>
           JOIN ROOM
         </Button>
       </Flex>
     </>
+  )
+}
+
+export const NameField = ({
+  name,
+  setName,
+  errorMessage,
+  onEnter,
+}: {
+  name: string
+  setName: React.Dispatch<React.SetStateAction<string>>
+  errorMessage?: string
+  onEnter?: () => void
+}) => {
+  return (
+    <FormControl mt={6} isInvalid={!!errorMessage}>
+      <FormLabel>
+        <Flex justifyContent={"space-between"}>
+          <Text>NAME</Text>
+          <Text>{12 - name.length}</Text>
+        </Flex>
+      </FormLabel>
+      <Input
+        placeholder={"ENTER YOUR NAME"}
+        value={name}
+        onChange={(e) => {
+          setName(e.target.value.toUpperCase().substring(0, 12))
+        }}
+        onKeyPress={(e) => {
+          if (e.key === "Enter" && onEnter) onEnter()
+        }}
+      />
+      {errorMessage && <FormErrorMessage>{errorMessage}</FormErrorMessage>}
+    </FormControl>
   )
 }
 

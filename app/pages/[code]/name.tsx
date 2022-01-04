@@ -1,11 +1,13 @@
 import React, { useState } from "react"
-import { BlitzPage, Routes, useMutation, useParam, useRouter } from "blitz"
+import { BlitzPage, Routes, useMutation, useParam, useQuery, useRouter } from "blitz"
 import Layout from "app/core/layouts/Layout"
 import { Wrapper } from "app/core/components/Wrapper"
 import { Text } from "@chakra-ui/react"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import { NameSelection } from "../create"
 import signup from "app/auth/mutations/signup"
+import checkRoomCode from "app/rooms/queries/checkRoomCode"
+import Page404 from "../404"
 
 const Name: BlitzPage = () => {
   const router = useRouter()
@@ -18,12 +20,18 @@ const Name: BlitzPage = () => {
   }
 
   const currentUser = useCurrentUser()
-  if (currentUser) {
-    router.push(Routes.Room({ code }))
-  }
 
   const [name, setName] = useState("")
   const [signupMutation] = useMutation(signup)
+
+  const [roomExists] = useQuery(checkRoomCode, { code })
+  if (!roomExists) return <Page404 />
+
+  if (currentUser) {
+    router.push(Routes.Room({ code }))
+    return <Text>Redirecting...</Text>
+  }
+
   const handleSubmit = async () => {
     console.log("submitting")
     await signupMutation({ code, name, role: "PLAYER" })

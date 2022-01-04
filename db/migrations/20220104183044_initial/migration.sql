@@ -3,10 +3,10 @@ CREATE TABLE "User" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    "name" TEXT,
-    "email" TEXT NOT NULL,
-    "hashedPassword" TEXT,
-    "role" TEXT NOT NULL DEFAULT 'USER'
+    "name" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'PLAYER',
+    "roomId" INTEGER NOT NULL,
+    CONSTRAINT "User_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -25,23 +25,18 @@ CREATE TABLE "Session" (
 );
 
 -- CreateTable
-CREATE TABLE "Token" (
+CREATE TABLE "Room" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    "hashedToken" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
-    "expiresAt" DATETIME NOT NULL,
-    "sentTo" TEXT NOT NULL,
-    "userId" INTEGER NOT NULL,
-    CONSTRAINT "Token_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    "code" TEXT NOT NULL,
+    "hostId" INTEGER NOT NULL,
+    "isFull" BOOLEAN NOT NULL,
+    "gameType" TEXT NOT NULL
 );
-
--- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Session_handle_key" ON "Session"("handle");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Token_hashedToken_type_key" ON "Token"("hashedToken", "type");
+CREATE UNIQUE INDEX "Room_code_key" ON "Room"("code");

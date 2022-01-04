@@ -14,7 +14,7 @@ import {
   Text,
 } from "@chakra-ui/react"
 import { ChangeEvent, useEffect, useState } from "react"
-import checkRoomCode from "app/rooms/mutations/checkRoomCode"
+import checkRoomCode from "app/rooms/queries/checkRoomCode"
 
 type SignupFormProps = {
   onSuccess?: () => void
@@ -36,14 +36,17 @@ export const SignupForm = (props: SignupFormProps) => {
 
   const [signupMutation] = useMutation(signup)
 
-  const [isRoomReady, setIsRoomReady] = useState<boolean | undefined>(undefined)
-  const [checkRoomCodeQuery] = useMutation(checkRoomCode)
+  const [isRoomReady, { refetch: checkRoomCodeQuery }] = useQuery(
+    checkRoomCode,
+    { code },
+    { enabled: false, suspense: false }
+  )
   useEffect(() => {
-    if (code.length < 4) return setIsRoomReady(undefined)
+    if (code.length < 4) return
     ;(async () => {
-      setIsRoomReady(await checkRoomCodeQuery({ code }))
+      await checkRoomCodeQuery()
     })()
-  }, [code, checkRoomCodeQuery])
+  }, [code, isRoomReady, checkRoomCodeQuery])
 
   const handleSubmit = async () => {
     const validationErrors = await validateZodSchema(Signup)({ name, code })

@@ -16,9 +16,11 @@ import { Wrapper } from "app/core/components/Wrapper"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import Layout from "app/core/layouts/Layout"
 import deleteUser from "app/rooms/mutations/deleteUser"
+import checkRoomCode from "app/rooms/queries/checkRoomCode"
 import getRoom from "app/rooms/queries/getRoom"
 import { BlitzPage, Routes, useMutation, useParam, useQuery, useRouter } from "blitz"
 import React, { useEffect, useState } from "react"
+import Page404 from "../404"
 
 const Room: BlitzPage = () => {
   const router = useRouter()
@@ -31,12 +33,17 @@ const Room: BlitzPage = () => {
   }
 
   const currentUser = useCurrentUser()
+  const [deleteUserMutation] = useMutation(deleteUser)
+
+  const [room, { refetch: refetchRoom }] = useQuery(getRoom, { code }) // TODO: replace this with checkRoomCode
+
+  const [roomExists] = useQuery(checkRoomCode, { code })
+  if (!roomExists) return <Page404 />
+
   if (!currentUser || currentUser.room.code !== code) {
     router.push(Routes.Name({ code }))
+    return <Text>Redirecting...</Text>
   }
-
-  const [room, { refetch: refetchRoom }] = useQuery(getRoom, { code })
-  const [deleteUserMutation] = useMutation(deleteUser)
 
   return (
     <>

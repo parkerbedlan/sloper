@@ -5,11 +5,6 @@ import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import Layout from "app/core/layouts/Layout"
 import { BlitzPage, Routes, useRouter } from "blitz"
 
-/*
- * This file is just for a pleasant getting started page for your new app.
- * You can delete everything in here and start from scratch if you like.
- */
-
 const Home: BlitzPage = () => {
   const router = useRouter()
   const currentUser = useCurrentUser()

@@ -35,15 +35,21 @@ const Room: BlitzPage = () => {
   const currentUser = useCurrentUser()
   const [deleteUserMutation] = useMutation(deleteUser)
 
-  const [room, { refetch: refetchRoom }] = useQuery(getRoom, { code }) // TODO: replace this with checkRoomCode
+  const [room, { refetch: refetchRoom }] = useQuery(getRoom, { code }, { enabled: false })
 
   const [roomExists] = useQuery(checkRoomCode, { code })
-  if (!roomExists) return <Page404 />
 
-  if (!currentUser || currentUser.room.code !== code) {
-    router.push(Routes.Name({ code }))
-    return <Text>Redirecting...</Text>
-  }
+  useEffect(() => {
+    if (!currentUser || currentUser.room.code !== code) {
+      router.push(Routes.Name({ code }))
+      // return <Text>Redirecting...</Text>
+    } else if (!room) {
+      refetchRoom()
+    }
+  }, [roomExists, currentUser, room, code, router, refetchRoom])
+
+  if (!roomExists) return <Page404 />
+  if (!room) return <Text>Loading...</Text>
 
   return (
     <>

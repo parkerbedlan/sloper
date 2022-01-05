@@ -8,6 +8,8 @@ import { NameSelection } from "../create"
 import signup from "app/auth/mutations/signup"
 import checkRoomCode from "app/rooms/queries/checkRoomCode"
 import Page404 from "../404"
+import deleteUser from "app/rooms/mutations/deleteUser"
+import logout from "app/auth/mutations/logout"
 
 const Name: BlitzPage = () => {
   const router = useRouter()
@@ -23,13 +25,19 @@ const Name: BlitzPage = () => {
 
   const [name, setName] = useState("")
   const [signupMutation] = useMutation(signup)
+  const [deleteUserMutation] = useMutation(deleteUser)
+  const [logoutMutation] = useMutation(logout)
 
   const [roomExists] = useQuery(checkRoomCode, { code })
   if (!roomExists) return <Page404 />
 
   if (currentUser) {
-    router.push(Routes.Room({ code }))
-    return <Text>Redirecting...</Text>
+    if (currentUser.room.code !== code) {
+      logoutMutation()
+    } else {
+      router.push(Routes.Room({ code }))
+      return <Text>Redirecting...</Text>
+    }
   }
 
   const handleSubmit = async () => {

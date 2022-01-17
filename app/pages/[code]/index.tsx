@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Flex,
   HStack,
   IconButton,
@@ -21,6 +22,9 @@ import getRoom from "app/rooms/queries/getRoom"
 import { BlitzPage, Routes, useMutation, useParam, useQuery, useRouter } from "blitz"
 import React, { useEffect, useState } from "react"
 import Page404 from "../404"
+import { useSocketConnect } from "../../zustand/hooks/useSocketConnect"
+import { User } from "@prisma/client"
+import { Message } from "fullstackUtils"
 
 const Room: BlitzPage = () => {
   const router = useRouter()
@@ -47,6 +51,21 @@ const Room: BlitzPage = () => {
       refetchRoom()
     }
   }, [roomExists, currentUser, room, code, router, refetchRoom])
+
+  const socket = useSocketConnect({ roomCode: code, currentUser: JSON.stringify(currentUser) }, [
+    {
+      on: "new-player-remote",
+      listener: (data: User) => {
+        console.log("new-player-remote", data)
+      },
+    },
+    {
+      on: "new-message-remote",
+      listener: (data: Message) => {
+        console.log("new-message-remote", data)
+      },
+    },
+  ])
 
   if (!roomExists) return <Page404 />
   if (!room) return <Text>Loading...</Text>
@@ -87,6 +106,18 @@ const Room: BlitzPage = () => {
         <Box mt={4}>
           <Chatbox />
         </Box>
+        <Button
+          onClick={() => {
+            const testMessage: Message = {
+              authorName: currentUser!.name,
+              roomCode: code,
+              text: "hi",
+            }
+            socket?.emit("new-message", testMessage)
+          }}
+        >
+          say hi
+        </Button>
       </Wrapper>
     </>
   )

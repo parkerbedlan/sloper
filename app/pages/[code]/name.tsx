@@ -25,7 +25,6 @@ const Name: BlitzPage = () => {
 
   const [name, setName] = useState("")
   const [signupMutation] = useMutation(signup)
-  const [deleteUserMutation] = useMutation(deleteUser)
   const [logoutMutation] = useMutation(logout)
 
   const [roomExists] = useQuery(checkRoomCode, { code })

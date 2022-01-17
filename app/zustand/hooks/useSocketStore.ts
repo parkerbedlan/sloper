@@ -5,18 +5,4 @@ import { createBasicStore } from "../zustandTools"
 
 export type SocketOrUndefined = Socket<DefaultEventsMap, DefaultEventsMap> | undefined
 
-// type SocketStoreState = {
-//   socket: SocketOrUndefined
-//   set: (socket: SocketOrUndefined) => void
-//   functionalSet: (funct: (socket: SocketOrUndefined) => SocketOrUndefined) => void
-// }
-
-// export const useSocketStore = create<SocketStoreState>((set, _get) => ({
-//   socket: undefined,
-//   set: (socket: SocketOrUndefined) => set((state) => ({ socket })),
-//   functionalSet: (funct: (socket: SocketOrUndefined) => SocketOrUndefined) => {
-//     set((state) => ({ socket: funct(state.socket) }))
-//   },
-// }))
-
 export const useSocketStore = createBasicStore<SocketOrUndefined>(undefined)

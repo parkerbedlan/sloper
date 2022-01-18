@@ -2,33 +2,54 @@ import { User, Room as PrismaRoom } from "@prisma/client"
 
 export type Message = { roomCode: string; text: string; authorName: string }
 
-export class Room {
-  status: "lobby" | "game" = "lobby"
-  // prismaRoom: PrismaRoom
-  players: User[] = []
-  messages: Message[] = []
+export type RoomState = {
+  status: "lobby" | "game"
+  players: User[]
+  messages: Message[]
+}
 
-  addPlayer(newPlayer: User) {
-    console.log("players before", this.players)
-    console.log("adding player", newPlayer)
-    this.players.push(newPlayer)
-    console.log("players after", this.players)
-  }
+export const initialRoomState: RoomState = {
+  status: "lobby",
+  players: [],
+  messages: [],
+}
 
-  removePlayer(userId: number) {
-    this.players = this.players.filter((p) => p.id !== userId)
-  }
+const initialize = (...args: any[]) => {
+  return initialRoomState
+}
 
-  addMessage(newMessage: Message) {
-    console.log("messages before", this.messages)
-    console.log("adding this message", newMessage)
-    this.messages.push(newMessage)
-    console.log("messages after", this.messages)
-  }
+const addPlayer = (oldRoomState: RoomState, newPlayer: User) => {
+  let newRoomState = { ...oldRoomState }
+  newRoomState.players.push(newPlayer)
+  return newRoomState
+}
 
-  handlers = {
-    "new-message": this.addMessage,
-    "new-player": this.addPlayer,
-    "kicked-player": this.removePlayer,
-  }
+const removePlayer = (oldRoomState: RoomState, userId: number) => {
+  let newRoomState = { ...oldRoomState }
+  newRoomState.players = newRoomState.players.filter((p) => p.id !== userId)
+  return newRoomState
+}
+
+const addMessage = (oldRoomState: RoomState, newMessage: Message) => {
+  let newRoomState = { ...oldRoomState }
+  newRoomState.messages.push(newMessage)
+  return newRoomState
+}
+
+const reducers = {
+  initialize: initialize,
+  "new-message": addMessage,
+  "new-player": addPlayer,
+  "kicked-player": removePlayer,
+}
+
+export const roomReducer = (
+  oldRoomState: RoomState | undefined,
+  actionType: keyof typeof reducers,
+  actionPayload: any
+): RoomState => {
+  console.log("before", oldRoomState)
+  const output = reducers[actionType](oldRoomState, actionPayload)
+  console.log("after", output)
+  return output
 }

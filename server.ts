@@ -6,7 +6,7 @@ import * as socketio from "socket.io"
 import express, { Express, Request, Response } from "express"
 import { parse } from "url"
 import { log } from "next/dist/server/lib/logging"
-import { Message, Room } from "fullstackUtils"
+import { Message, RoomState, initialRoomState, roomReducer } from "fullstackUtils"
 import { User } from "@prisma/client"
 
 const { PORT = "3000" } = process.env
@@ -26,7 +26,7 @@ blitzApp.prepare().then(async () => {
   app.set("proxy", 1)
 
   const sockets: socketio.Socket[] = []
-  const rooms: Record<string, Room> = {}
+  const roomStates: Record<string, RoomState> = {}
 
   io.on("connection", (socket: socketio.Socket) => {
     console.log("connection", socket.handshake.query)
@@ -35,27 +35,25 @@ blitzApp.prepare().then(async () => {
     const currentUser = JSON.parse(socket.handshake.query.currentUser as string) as User
     const roomCode = socket.handshake.query.roomCode as string
     if (roomCode) socket.join(roomCode)
-    if (!(roomCode in rooms)) {
-      rooms[roomCode] = new Room()
+    if (!(roomCode in roomStates)) {
+      roomStates[roomCode] = roomReducer(undefined, "initialize", null)
     }
-    const room = rooms[roomCode]
-    console.log("room", room)
+    let roomState = roomStates[roomCode]
+    console.log("room", roomState)
 
-    if (!room?.players.some((p) => p.id === currentUser.id)) {
+    if (!roomState?.players.some((p) => p.id === currentUser.id)) {
       io.to(roomCode).emit("new-player-remote", currentUser)
-      room?.addPlayer(currentUser)
+      roomState = roomReducer(roomState, "new-player", currentUser)
     } else {
       io.to(roomCode).emit("player-online-remote", currentUser)
     }
 
-    socket.emit("status", "Hello from Socket.io")
+    socket.emit("connected", roomState)
 
     // TODO: generalize: for each room handler, socket.on that handler
     socket.on("new-message", (newMessage: Message) => {
       console.log("new-message", newMessage)
-
-      room?.addMessage(newMessage)
-      // room?.handlers["new-message"](newMessage)
+      roomState = roomReducer(roomState, "new-message", newMessage)
       io.to(roomCode).emit("new-message-remote", newMessage)
     })
 

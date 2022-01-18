@@ -24,9 +24,9 @@ import React, { useEffect, useState } from "react"
 import Page404 from "../404"
 import { useSocketConnect } from "../../zustand/hooks/useSocketConnect"
 import { User } from "@prisma/client"
-import { Message } from "fullstackUtils"
+import { initialRoomState, Message, roomReducer, RoomState } from "fullstackUtils"
 
-const Room: BlitzPage = () => {
+const RoomPage: BlitzPage = () => {
   const router = useRouter()
 
   const code = useParam("code", "string")!
@@ -52,26 +52,42 @@ const Room: BlitzPage = () => {
     }
   }, [roomExists, currentUser, room, code, router, refetchRoom])
 
+  const [roomState, setRoomState] = useState<RoomState>(initialRoomState)
+
   const socket = useSocketConnect({ roomCode: code, currentUser: JSON.stringify(currentUser) }, [
+    {
+      on: "connected",
+      listener: (data: RoomState) => {
+        setRoomState(data)
+      },
+    },
     {
       on: "new-player-remote",
       listener: (data: User) => {
         console.log("new-player-remote", data)
+        setRoomState((roomState) => roomReducer(roomState, "new-player", data))
       },
     },
     {
       on: "new-message-remote",
       listener: (data: Message) => {
         console.log("new-message-remote", data)
+        setRoomState((roomState) => roomReducer(roomState, "new-message", data))
       },
     },
   ])
+
+  // useEffect(() => {
+  //   console.log("roomState", roomState)
+  // }, [roomState])
 
   if (!roomExists) return <Page404 />
   if (!room) return <Text>Loading...</Text>
 
   return (
     <>
+      {/* <pre>{JSON.stringify(roomState, null, 2)}</pre> */}
+      <pre>{roomState.messages.length}</pre>
       <Wrapper>
         {/* <pre>{JSON.stringify(currentUser, null, 2)}</pre> */}
         <ClickableCode code={code} />
@@ -104,7 +120,7 @@ const Room: BlitzPage = () => {
         ))}
         <hr />
         <Box mt={4}>
-          <Chatbox />
+          <Chatbox messages={roomState.messages} />
         </Box>
         <Button
           onClick={() => {
@@ -123,16 +139,22 @@ const Room: BlitzPage = () => {
   )
 }
 
-const Chatbox = () => {
+const Chatbox: React.FC<{ messages: Message[] }> = ({ messages }) => {
   const [newMessage, setNewMessage] = useState("")
   return (
     <>
       <Flex border="1px" overflowY={"scroll"} flexDirection="column-reverse" h={60}>
         <Stack>
-          {[...Array(100)].map((_, i) => (
+          {/* {[...Array(100)].map((_, i) => (
             <Text key={i}>
               <b>JIMMY: </b>
               {i}
+            </Text>
+          ))} */}
+          {messages.map((message, i) => (
+            <Text key={i}>
+              <b>{message.authorName}: </b>
+              {message.text}
             </Text>
           ))}
         </Stack>
@@ -172,7 +194,7 @@ const ClickableCode = ({ code }: { code: string }) => {
   )
 }
 
-Room.suppressFirstRenderFlicker = true
-Room.getLayout = (page) => <Layout title="Room">{page}</Layout>
+RoomPage.suppressFirstRenderFlicker = true
+RoomPage.getLayout = (page) => <Layout title="Room">{page}</Layout>
 
-export default Room
+export default RoomPage

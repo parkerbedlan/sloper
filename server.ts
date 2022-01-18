@@ -1,7 +1,15 @@
 import { BlitzApiHandler } from "blitz"
 import blitz from "blitz/custom-server"
 import express, { Express, Request, Response } from "express"
-import { CurrentUser, GameType, Message, Room, RPSOption, RPSRoom } from "fullstackUtils2"
+import {
+  CurrentUser,
+  GameType,
+  Message,
+  PlayerName,
+  Room,
+  RPSOption,
+  RPSRoom,
+} from "fullstackUtils2"
 import * as http from "http"
 import * as socketio from "socket.io"
 
@@ -41,14 +49,15 @@ blitzApp.prepare().then(async () => {
   })
   app.set("proxy", 1)
 
-  const sockets: socketio.Socket[] = []
+  type PlayerId = number
+  const sockets: Record<PlayerId, socketio.Socket> = {}
   const rooms: Record<string, Room> = {}
 
   io.on("connection", (socket: socketio.Socket) => {
     console.log("connection", socket.handshake.query)
-    sockets.push(socket)
 
     const currentUser = JSON.parse(socket.handshake.query.currentUser as string) as CurrentUser
+    sockets[currentUser.id] = socket
     const roomCode = socket.handshake.query.roomCode as string
     const gameType = socket.handshake.query.gameType as GameType
     if (roomCode) socket.join(roomCode)
@@ -68,33 +77,53 @@ blitzApp.prepare().then(async () => {
     }
 
     // TODO: privacy filter this
-    socket.emit("update", rooms[roomCode])
-    console.log("update", rooms[roomCode])
+    socket.emit("update", rooms[roomCode]?.getClassifiedData(currentUser.name))
+    console.log("update", rooms[roomCode]?.getClassifiedData(currentUser.name))
+
+    const publicUpdate = (room: Room) => io.to(roomCode).emit("update", room)
+
+    const privateUpdate = (room: Room) => {
+      room.players.forEach((player) => {
+        const playerSocket = sockets[player.id]
+        playerSocket?.emit("update", room.getClassifiedData(player.name))
+      })
+    }
 
     socket.on("new-player", (newPlayer: CurrentUser) => {
       rooms[roomCode]?.addPlayer(newPlayer)
-      io.to(roomCode).emit("update", rooms[roomCode])
+      // io.to(roomCode).emit("update", rooms[roomCode])
+      publicUpdate(rooms[roomCode]!)
     })
 
     socket.on("kicked-player", (userId: number) => {
       rooms[roomCode]?.removePlayer(userId)
-      io.to(roomCode).emit("update", rooms[roomCode])
+      // io.to(roomCode).emit("update", rooms[roomCode])
+      publicUpdate(rooms[roomCode]!)
     })
 
     socket.on("new-message", (newMessage: Message) => {
       rooms[roomCode]?.addMessage(newMessage)
-      io.to(roomCode).emit("update", rooms[roomCode])
+      // io.to(roomCode).emit("update", rooms[roomCode])
+      publicUpdate(rooms[roomCode]!)
+      // to test individual message sending
+      rooms[roomCode]?.players.forEach((player) => {
+        const playerSocket = sockets[player.id]
+        playerSocket?.emit("sup", player.name)
+      })
     })
 
     socket.on("start-game", () => {
       rooms[roomCode] = rooms[roomCode]!.startGame()
-      io.to(roomCode).emit("update", rooms[roomCode])
+      // io.to(roomCode).emit("update", rooms[roomCode])
+      publicUpdate(rooms[roomCode]!)
     })
 
     socket.on("rps-choose", ({ playerName, choice }: { playerName: string; choice: RPSOption }) => {
       ;(rooms[roomCode] as RPSRoom).choose(playerName, choice)
       // TODO emit private version to each player
-      io.to(roomCode).emit("update", rooms[roomCode])
+      // io.to(roomCode).emit("update", rooms[roomCode])
+      // publicUpdate(rooms[roomCode]!)
+      privateUpdate(rooms[roomCode]!)
     })
 
     socket.on("disconnect", () => {

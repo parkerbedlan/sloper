@@ -49,6 +49,12 @@ export const useRoomState: () => [Room | undefined, SocketOrUndefined, Status] =
           setRoomState(data)
         },
       },
+      {
+        on: "sup",
+        listener: (data: any) => {
+          console.log("sup", data)
+        },
+      },
     ],
     !!room
   )

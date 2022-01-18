@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { BlitzPage, Routes, useRouter } from "blitz"
+import { BlitzPage, Image, Routes, useRouter } from "blitz"
 import Layout from "app/core/layouts/Layout"
 import { Wrapper } from "app/core/components/Wrapper"
 import {
@@ -80,12 +80,10 @@ const RPSGame: React.FC<{ room: RPSRoomData; socket: SocketOrUndefined }> = ({ r
 
   return (
     <>
-      <pre>{JSON.stringify(choices, null, 2)}</pre>
-      <pre>{JSON.stringify(score, null, 2)}</pre>
-      <pre>{JSON.stringify(roundNumber, null, 2)}</pre>
-      <pre>{selectedValue}</pre>
+      <Text m={4}>Round {roundNumber}</Text>
       <RPSRadioGroup {...{ selectedValue, setSelectedValue, lockedIn }} />
-      <Flex justifyContent={"flex-end"} m={4}>
+      <Flex justifyContent={"space-between"} alignItems={"center"} m={4}>
+        <ChoiceIndicators choices={choices} score={score} />
         <Button
           colorScheme={"blue"}
           disabled={!selectedValue || lockedIn}
@@ -102,6 +100,28 @@ const RPSGame: React.FC<{ room: RPSRoomData; socket: SocketOrUndefined }> = ({ r
   )
 }
 
+const ChoiceIndicators = ({ choices, score }) => {
+  return (
+    <Box>
+      {Object.keys(choices).map((playerName) => (
+        <Flex key={playerName} alignItems="center">
+          <Box minW={"24"}>
+            <Text>{playerName}: </Text>
+          </Box>
+          <Box>{score[playerName]}</Box>
+          <Flex flexShrink="unset" justifyContent={"center"} w={10}>
+            {choices[playerName] !== null ? (
+              <Text>✔</Text>
+            ) : (
+              <Image src={"/typing.gif"} alt="typing" width={40} height={13} />
+            )}
+          </Flex>
+        </Flex>
+      ))}
+    </Box>
+  )
+}
+
 function RPSRadioGroup({ selectedValue, setSelectedValue, lockedIn }) {
   return (
     <>
@@ -110,7 +130,6 @@ function RPSRadioGroup({ selectedValue, setSelectedValue, lockedIn }) {
           return <RPSRadio key={value} {...{ value, selectedValue, setSelectedValue, lockedIn }} />
         })}
       </Flex>
-      <Button onClick={() => setSelectedValue(undefined)}>bye</Button>
     </>
   )
 }

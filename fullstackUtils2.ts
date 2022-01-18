@@ -62,6 +62,10 @@ export class Room {
     }
     return this
   }
+
+  getClassifiedData(playerName: string) {
+    return { ...this }
+  }
 }
 
 export class RPSRoom extends Room {
@@ -111,12 +115,12 @@ export class RPSRoom extends Room {
   }
 
   getClassifiedData(playerName: string) {
-    return { ...this }
-  }
-
-  // TODO: make data classified
-  private getBoard(playerName: string) {
-    return this.board
+    let classifiedChoices = Object.fromEntries(
+      Object.entries(this.board.choices).map(([name, choice]) =>
+        name === playerName ? [name, choice] : choice === null ? [name, null] : [name, "private"]
+      ) as any
+    )
+    return { ...this, board: { ...this.board, choices: classifiedChoices } }
   }
 }
 

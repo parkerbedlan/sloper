@@ -6,6 +6,7 @@ const gameTypes = ["Rock Paper Scissors", "Tic Tac Toe"] as const
 type GameType = typeof gameTypes[number]
 
 export type RoomState = {
+  code: string
   status: "lobby" | "game"
   players: User[]
   messages: Message[]
@@ -13,6 +14,7 @@ export type RoomState = {
 }
 
 export const initialRoomState: RoomState = {
+  code: "",
   status: "lobby",
   players: [],
   messages: [],
@@ -25,8 +27,8 @@ const setRoomState: Handler = (_oldRoomState, newRoomState: RoomState) => {
   return newRoomState
 }
 
-const initialize: Handler = (_oldRoomState, gameType: GameType) => {
-  return { ...initialRoomState, gameType }
+const initialize: Handler = (_oldRoomState, data: { gameType: GameType; code: string }) => {
+  return { ...initialRoomState, ...data }
 }
 
 const addPlayer: Handler = (oldRoomState: RoomState, newPlayer: User) => {

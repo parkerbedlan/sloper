@@ -45,7 +45,7 @@ blitzApp.prepare().then(async () => {
     const gameType = socket.handshake.query.gameType as string
     if (roomCode) socket.join(roomCode)
     if (!(roomCode in roomStates)) {
-      roomStates[roomCode] = roomReducer(undefined, "initialize", gameType)
+      roomStates[roomCode] = roomReducer(undefined, "initialize", { gameType, code: roomCode })
     }
     // let roomState = roomStates[roomCode]
     // console.log("room", roomState)

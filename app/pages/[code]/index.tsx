@@ -26,58 +26,23 @@ import React, { useEffect, useRef, useState } from "react"
 import { useSocketConnect } from "../../zustand/hooks/useSocketConnect"
 import Page404 from "../404"
 import { ChevronRightIcon } from "@chakra-ui/icons"
+import { useRoomState } from "../../core/hooks/useRoomState"
 
 const RoomPage: BlitzPage = () => {
+  const [roomState, socket, roomStatus] = useRoomState()
+
   const router = useRouter()
-
-  const code = useParam("code", "string")!
-  if (code) {
-    if (code.length !== 4) router.push(Routes.Home())
-    const codeAllCaps = code.toUpperCase()
-    if (code !== codeAllCaps) router.push(Routes.RoomPage({ code: codeAllCaps }))
-  }
-
   const currentUser = useCurrentUser()
+
+  useEffect(() => {
+    if (roomState.status === "game" && roomState.code)
+      router.push(Routes.Game({ code: roomState.code }))
+  }, [roomState.status, roomState.code, router])
+
   const [deleteUserMutation] = useMutation(deleteUser)
 
-  const [room, { refetch: refetchRoom }] = useQuery(getRoom, { code }, { enabled: false })
-
-  const [roomExists] = useQuery(checkRoomCode, { code })
-
-  useEffect(() => {
-    if (!currentUser || currentUser.room.code !== code) {
-      router.push(Routes.Name({ code }))
-      // return <Text>Redirecting...</Text>
-    } else if (!room) {
-      refetchRoom()
-    }
-  }, [roomExists, currentUser, room, code, router, refetchRoom])
-
-  const [roomState, setRoomState] = useState<RoomState>(initialRoomState)
-
-  const socket = useSocketConnect(
-    {
-      roomCode: code,
-      gameType: room ? room.gameType : false,
-      currentUser: JSON.stringify(currentUser),
-    },
-    actionTypes.map((actionType) => ({
-      on: actionType,
-      listener: (data: any) => {
-        console.log(actionType, data)
-        setRoomState((roomState) => roomReducer(roomState, actionType, data))
-      },
-    })),
-    !!room
-  )
-
-  useEffect(() => {
-    if (roomState?.status === "game") router.push(Routes.Game({ code }))
-  }, [roomState?.status, code, router])
-
-  if (!roomExists) return <Page404 />
-  if (!room) return <Text>Loading...</Text>
-  // if (!roomState) return <Text>Connecting...</Text>
+  if (roomStatus === "404") return <Page404 />
+  if (roomStatus === "loading") return <Text>Loading...</Text>
 
   return (
     <>
@@ -85,8 +50,8 @@ const RoomPage: BlitzPage = () => {
       <Wrapper>
         <Flex alignItems="flex-end" justifyContent={"space-between"} wrap="nowrap">
           <Box>
-            <ClickableCode code={code} />
-            <Text>Game: {room.gameType}</Text>
+            <ClickableCode code={roomState.code} />
+            <Text>Game: {roomState.gameType}</Text>
           </Box>
           {currentUser!.role === "HOST" && (
             <Box mb={1}>
@@ -116,9 +81,10 @@ const RoomPage: BlitzPage = () => {
                   if (
                     window.confirm(`Are you sure you want to remove ${player.name} from the room?`)
                   ) {
-                    await deleteUserMutation({ id: player.id, roomId: room.id })
+                    // await deleteUserMutation({ id: player.id, roomId: room.id })
+                    await deleteUserMutation({ id: player.id, code: roomState.code })
                     socket?.emit("kicked-player", player.id)
-                    await refetchRoom()
+                    // await refetchRoom()
                   }
                 }}
               />
@@ -133,7 +99,11 @@ const RoomPage: BlitzPage = () => {
           <Chatbox
             messages={roomState.messages}
             onSend={(text) => {
-              const message: Message = { authorName: currentUser!.name, roomCode: code, text }
+              const message: Message = {
+                authorName: currentUser!.name,
+                roomCode: roomState.code,
+                text,
+              }
               socket?.emit("new-message", message)
             }}
           />

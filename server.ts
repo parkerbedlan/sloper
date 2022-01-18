@@ -1,13 +1,21 @@
 // server.ts
-import blitz from "blitz/custom-server"
 import { BlitzApiHandler } from "blitz"
+import blitz from "blitz/custom-server"
+import express, { Express, Request, Response } from "express"
+import { actionTypes, roomReducer, RoomState } from "fullstackUtils"
 import * as http from "http"
 import * as socketio from "socket.io"
-import express, { Express, Request, Response } from "express"
-import { parse } from "url"
-import { log } from "next/dist/server/lib/logging"
-import { Message, RoomState, initialRoomState, roomReducer } from "fullstackUtils"
-import { User } from "@prisma/client"
+// import { User } from "@prisma/client"
+
+type CurrentUser = {
+  role: string
+  id: number
+  name: string
+  room: {
+    id: number
+    code: string
+  }
+}
 
 const { PORT = "3000" } = process.env
 const dev = process.env.NODE_ENV !== "production"
@@ -32,16 +40,20 @@ blitzApp.prepare().then(async () => {
     console.log("connection", socket.handshake.query)
     sockets.push(socket)
 
-    const currentUser = JSON.parse(socket.handshake.query.currentUser as string) as User
+    const currentUser = JSON.parse(socket.handshake.query.currentUser as string) as CurrentUser
     const roomCode = socket.handshake.query.roomCode as string
     if (roomCode) socket.join(roomCode)
     if (!(roomCode in roomStates)) {
       roomStates[roomCode] = roomReducer(undefined, "initialize", null)
     }
     let roomState = roomStates[roomCode]
-    console.log("room", roomState)
+    // console.log("room", roomState)
 
-    if (!roomState?.players.some((p) => p.id === currentUser.id)) {
+    if (
+      currentUser &&
+      !roomState?.players.some((p) => p.id === currentUser.id) &&
+      currentUser.room.code === roomCode
+    ) {
       io.to(roomCode).emit("new-player-remote", currentUser)
       roomState = roomReducer(roomState, "new-player", currentUser)
     } else {
@@ -50,11 +62,12 @@ blitzApp.prepare().then(async () => {
 
     socket.emit("connected", roomState)
 
-    // TODO: generalize: for each room handler, socket.on that handler
-    socket.on("new-message", (newMessage: Message) => {
-      console.log("new-message", newMessage)
-      roomState = roomReducer(roomState, "new-message", newMessage)
-      io.to(roomCode).emit("new-message-remote", newMessage)
+    actionTypes.forEach((actionType) => {
+      socket.on(actionType, (data: any) => {
+        console.log(actionType, data)
+        roomState = roomReducer(roomState, actionType, data)
+        io.to(roomCode).emit(`${actionType}-remote`, data)
+      })
     })
 
     socket.on("disconnect", () => {

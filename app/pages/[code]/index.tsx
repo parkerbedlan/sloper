@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Flex,
-  HStack,
   IconButton,
   Input,
   InputGroup,
@@ -11,6 +10,7 @@ import {
   Text,
   Tooltip,
 } from "@chakra-ui/react"
+import { User } from "@prisma/client"
 import { CloseIcon } from "app/core/components/icons/CloseIcon"
 import { SendIcon } from "app/core/components/icons/SendIcon"
 import { Wrapper } from "app/core/components/Wrapper"
@@ -20,11 +20,10 @@ import deleteUser from "app/rooms/mutations/deleteUser"
 import checkRoomCode from "app/rooms/queries/checkRoomCode"
 import getRoom from "app/rooms/queries/getRoom"
 import { BlitzPage, Routes, useMutation, useParam, useQuery, useRouter } from "blitz"
-import React, { useEffect, useState } from "react"
-import Page404 from "../404"
-import { useSocketConnect } from "../../zustand/hooks/useSocketConnect"
-import { User } from "@prisma/client"
 import { initialRoomState, Message, roomReducer, RoomState } from "fullstackUtils"
+import React, { useEffect, useState } from "react"
+import { useSocketConnect } from "../../zustand/hooks/useSocketConnect"
+import Page404 from "../404"
 
 const RoomPage: BlitzPage = () => {
   const router = useRouter()
@@ -33,7 +32,7 @@ const RoomPage: BlitzPage = () => {
   if (code) {
     if (code.length !== 4) router.push(Routes.Home())
     const codeAllCaps = code.toUpperCase()
-    if (code !== codeAllCaps) router.push(Routes.Room({ code: codeAllCaps }))
+    if (code !== codeAllCaps) router.push(Routes.RoomPage({ code: codeAllCaps }))
   }
 
   const currentUser = useCurrentUser()
@@ -75,6 +74,13 @@ const RoomPage: BlitzPage = () => {
         setRoomState((roomState) => roomReducer(roomState, "new-message", data))
       },
     },
+    {
+      on: "kicked-player-remote",
+      listener: (data: User) => {
+        console.log("kicked-player-remote", data)
+        setRoomState((roomState) => roomReducer(roomState, "kicked-player", data))
+      },
+    },
   ])
 
   // useEffect(() => {
@@ -86,15 +92,14 @@ const RoomPage: BlitzPage = () => {
 
   return (
     <>
-      {/* <pre>{JSON.stringify(roomState, null, 2)}</pre> */}
-      <pre>{roomState.messages.length}</pre>
+      {/* <pre>{roomState.messages.length}</pre> */}
       <Wrapper>
         {/* <pre>{JSON.stringify(currentUser, null, 2)}</pre> */}
         <ClickableCode code={code} />
         <Text>Game: {room.gameType}</Text>
         <hr />
         <Text>Players:</Text>
-        {room.players.map((player) => (
+        {roomState.players.map((player) => (
           <Flex key={player.id} alignItems="center">
             {currentUser?.role === "HOST" && player.id !== currentUser!.id && (
               <IconButton
@@ -108,6 +113,7 @@ const RoomPage: BlitzPage = () => {
                     window.confirm(`Are you sure you want to remove ${player.name} from the room?`)
                   ) {
                     await deleteUserMutation({ id: player.id, roomId: room.id })
+                    socket?.emit("kicked-player", player.id)
                     await refetchRoom()
                   }
                 }}
@@ -134,6 +140,7 @@ const RoomPage: BlitzPage = () => {
         >
           say hi
         </Button>
+        <pre>{JSON.stringify(roomState, null, 2)}</pre>
       </Wrapper>
     </>
   )
@@ -145,12 +152,6 @@ const Chatbox: React.FC<{ messages: Message[] }> = ({ messages }) => {
     <>
       <Flex border="1px" overflowY={"scroll"} flexDirection="column-reverse" h={60}>
         <Stack>
-          {/* {[...Array(100)].map((_, i) => (
-            <Text key={i}>
-              <b>JIMMY: </b>
-              {i}
-            </Text>
-          ))} */}
           {messages.map((message, i) => (
             <Text key={i}>
               <b>{message.authorName}: </b>

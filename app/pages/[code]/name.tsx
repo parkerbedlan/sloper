@@ -34,7 +34,7 @@ const Name: BlitzPage = () => {
     if (currentUser.room.code !== code) {
       logoutMutation()
     } else {
-      router.push(Routes.Room({ code }))
+      router.push(Routes.RoomPage({ code }))
       return <Text>Redirecting...</Text>
     }
   }

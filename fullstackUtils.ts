@@ -1,4 +1,4 @@
-import { User, Room as PrismaRoom } from "@prisma/client"
+import { User } from "@prisma/client"
 
 export type Message = { roomCode: string; text: string; authorName: string }
 
@@ -36,20 +36,23 @@ const addMessage = (oldRoomState: RoomState, newMessage: Message) => {
   return newRoomState
 }
 
-const reducers = {
+const handlers = {
   initialize: initialize,
   "new-message": addMessage,
   "new-player": addPlayer,
   "kicked-player": removePlayer,
 }
 
+export const actionTypes = ["initialize", "new-message", "new-player", "kicked-player"] as const
+export type ActionType = typeof actionTypes[number]
+
 export const roomReducer = (
   oldRoomState: RoomState | undefined,
-  actionType: keyof typeof reducers,
+  actionType: ActionType,
   actionPayload: any
 ): RoomState => {
-  console.log("before", oldRoomState)
-  const output = reducers[actionType](oldRoomState, actionPayload)
-  console.log("after", output)
+  // console.log("before", oldRoomState)
+  const output = handlers[actionType](oldRoomState, actionPayload)
+  // console.log("after", output)
   return output
 }

@@ -1,18 +1,15 @@
-import { Text } from "@chakra-ui/react"
-import Page404 from "app/pages/404"
-import deleteUser from "app/rooms/mutations/deleteUser"
 import checkRoomCode from "app/rooms/queries/checkRoomCode"
 import getRoom from "app/rooms/queries/getRoom"
 import { useSocketConnect } from "app/zustand/hooks/useSocketConnect"
 import { SocketOrUndefined } from "app/zustand/hooks/useSocketStore"
-import { useRouter, useParam, Routes, useMutation, useQuery } from "blitz"
-import { RoomState, initialRoomState, actionTypes, roomReducer } from "fullstackUtils"
+import { Routes, useParam, useQuery, useRouter } from "blitz"
+import { Room } from "fullstackUtils2"
 import { useEffect, useState } from "react"
 import { useCurrentUser } from "./useCurrentUser"
 
 type Status = "404" | "loading" | "success"
 
-export const useRoomState: () => [RoomState, SocketOrUndefined, Status] = () => {
+export const useRoomState: () => [Room | undefined, SocketOrUndefined, Status] = () => {
   const router = useRouter()
 
   const code = useParam("code", "string")!
@@ -37,7 +34,7 @@ export const useRoomState: () => [RoomState, SocketOrUndefined, Status] = () => 
     }
   }, [roomExists, currentUser, room, code, router, refetchRoom])
 
-  const [roomState, setRoomState] = useState<RoomState>(initialRoomState)
+  const [roomState, setRoomState] = useState<Room | undefined>(undefined)
 
   const socket = useSocketConnect(
     {
@@ -45,15 +42,14 @@ export const useRoomState: () => [RoomState, SocketOrUndefined, Status] = () => 
       gameType: room ? room.gameType : false,
       currentUser: JSON.stringify(currentUser),
     },
-    actionTypes.map((actionType) => ({
-      on: actionType,
-      listener: (data: any) => {
-        console.log(actionType, data)
-        setRoomState((roomState) =>
-          roomReducer(roomState, actionType, data, "client", currentUser || undefined)
-        )
+    [
+      {
+        on: "update",
+        listener: (data: any) => {
+          setRoomState(data)
+        },
       },
-    })),
+    ],
     !!room
   )
 
@@ -61,7 +57,7 @@ export const useRoomState: () => [RoomState, SocketOrUndefined, Status] = () => 
 
   let status: Status
   if (!roomExists) status = "404"
-  else if (!room) status = "loading"
+  else if (!room || !roomState) status = "loading"
   else status = "success"
 
   return [roomState, socket, status]

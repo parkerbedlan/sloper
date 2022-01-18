@@ -1,5 +1,14 @@
 import { User } from "@prisma/client"
-import { CurrentUser } from "server"
+
+type CurrentUser = {
+  role: string
+  id: number
+  name: string
+  room: {
+    id: number
+    code: string
+  }
+}
 
 type ClientOrServer = "client" | "server"
 

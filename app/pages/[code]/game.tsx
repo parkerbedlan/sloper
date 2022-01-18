@@ -6,6 +6,7 @@ import {
   Box,
   Button,
   Flex,
+  HStack,
   IconButton,
   Text,
   useRadio,
@@ -17,30 +18,30 @@ import Page404 from "../404"
 import { ScissorsIcon } from "app/core/components/icons/ScissorsIcon"
 import { RockIcon } from "app/core/components/icons/RockIcon"
 import { PaperIcon } from "app/core/components/icons/PaperIcon"
-import { RoomState, RPSChoice, rpsChoices } from "fullstackUtils"
 import { SocketOrUndefined } from "app/zustand/hooks/useSocketStore"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
-import { useStatePersist } from "app/zustand/zustandTools"
+import { Room, RPSOption, rpsOptions, RPSRoom, RPSRoomData } from "fullstackUtils2"
 
 const Game: BlitzPage = () => {
-  const [roomState, socket, roomStatus] = useRoomState()
+  const [room, socket, roomStatus] = useRoomState()
 
   const router = useRouter()
   useEffect(() => {
-    if (roomState.status === "lobby" && roomState.code) {
-      router.push(Routes.RoomPage({ code: roomState.code }))
+    if (roomStatus === "success" && room!.status === "lobby" && room!.code) {
+      console.log("asdf", room)
+      router.push(Routes.RoomPage({ code: room!.code }))
     }
-  }, [roomState.status, roomState.code, router])
+  }, [roomStatus, room, room?.status, room?.code, router])
 
   if (roomStatus === "404") return <Page404 />
-  if (roomStatus === "loading") return <Text>Loading...</Text>
+  if (roomStatus === "loading" || !room) return <Text>Loading...</Text>
 
-  if (roomState.status === "lobby") return <Text>Redirecting...</Text>
+  if (room!.status === "lobby") return <Text>Redirecting...</Text>
 
   return (
     <>
       <Wrapper>
-        <RPSGame {...{ roomState, socket }} />
+        <RPSGame {...{ room: room as RPSRoomData, socket }} />
       </Wrapper>
     </>
   )
@@ -51,48 +52,46 @@ Game.getLayout = (page) => <Layout title="Game">{page}</Layout>
 
 export default Game
 
-const RPSGame: React.FC<{ roomState: RoomState; socket: SocketOrUndefined }> = ({
-  roomState,
-  socket,
-}) => {
+const RPSGame: React.FC<{ room: RPSRoomData; socket: SocketOrUndefined }> = ({ room, socket }) => {
+  if (room.gameType === "Tic Tac Toe") throw Error("wrong game type")
+
   const currentUser = useCurrentUser()!
-  // const [currentChoice, setCurrentChoice] = useState<RPSChoice | undefined>(undefined)
-  const [currentChoice, setCurrentChoice] = useStatePersist<RPSChoice | undefined>(
-    undefined,
-    "currentChoice",
-    true
-  )
 
-  const [lockedIn, setLockedIn] = useState<boolean>(false)
-
-  if (roomState.gameType === "Tic Tac Toe") throw Error("wrong game type")
-
-  const board = roomState.board!
+  const board = room.board
   const choices = board.choices
-  const classifiedChoices = {
-    ...choices,
-    [currentUser.name]:
-      choices[currentUser.name] === "private" ? currentChoice : choices[currentUser.name],
-  }
-
   const score = board.score
+  const roundNumber = board.roundNumber
+
+  const [selectedValue, setSelectedValue] = useState<RPSOption | undefined>(
+    (choices[currentUser.name] as RPSOption) || undefined
+  )
+  const [lockedIn, setLockedIn] = useState<boolean>(!!choices[currentUser.name])
 
   useEffect(() => {
-    setLockedIn(false)
-  }, [score])
+    const myChoice = choices[currentUser.name]
+    if (myChoice) {
+      setSelectedValue(myChoice as RPSOption)
+      setLockedIn(true)
+    } else {
+      setSelectedValue(undefined)
+      setLockedIn(false)
+    }
+  }, [currentUser, choices])
 
   return (
     <>
-      <pre>{JSON.stringify(classifiedChoices, null, 2)}</pre>
+      <pre>{JSON.stringify(choices, null, 2)}</pre>
       <pre>{JSON.stringify(score, null, 2)}</pre>
-      <RPSRadioGroup {...{ currentChoice, setCurrentChoice, lockedIn }} />
+      <pre>{JSON.stringify(roundNumber, null, 2)}</pre>
+      <pre>{selectedValue}</pre>
+      <RPSRadioGroup {...{ selectedValue, setSelectedValue, lockedIn }} />
       <Flex justifyContent={"flex-end"} m={4}>
         <Button
           colorScheme={"blue"}
-          disabled={!currentChoice || lockedIn}
+          disabled={!selectedValue || lockedIn}
           onClick={() => {
-            console.log("choosing", currentChoice)
-            socket?.emit("rps-choose", { choice: currentChoice, playerName: currentUser.name })
+            console.log("choosing", selectedValue)
+            socket?.emit("rps-choose", { choice: selectedValue, playerName: currentUser.name })
             setLockedIn(true)
           }}
         >
@@ -103,72 +102,52 @@ const RPSGame: React.FC<{ roomState: RoomState; socket: SocketOrUndefined }> = (
   )
 }
 
-const RPSRadioGroup = ({ currentChoice, setCurrentChoice, lockedIn }) => {
-  const { getRootProps, getRadioProps } = useRadioGroup({
-    name: "currentChoice",
-    value: currentChoice,
-    onChange: (nextValue) => {
-      setCurrentChoice(nextValue as RPSChoice)
-    },
-  })
-  const group = getRootProps()
-
+function RPSRadioGroup({ selectedValue, setSelectedValue, lockedIn }) {
   return (
     <>
-      <Flex justifyContent={"space-around"} {...group}>
-        {rpsChoices.map((choice) => {
-          const radio = getRadioProps({ value: choice })
-          return <RPSRadio key={choice} choice={choice} {...radio} isDisabled={lockedIn} />
+      <Flex justifyContent={"space-around"}>
+        {rpsOptions.map((value) => {
+          return <RPSRadio key={value} {...{ value, selectedValue, setSelectedValue, lockedIn }} />
         })}
       </Flex>
+      <Button onClick={() => setSelectedValue(undefined)}>bye</Button>
     </>
   )
 }
 
-const RPSRadio: React.FC<{ choice: RPSChoice } & UseRadioProps> = ({
-  choice,
-  isDisabled,
-  ...props
-}) => {
-  const { getInputProps, getCheckboxProps } = useRadio(props)
-
-  const input = getInputProps()
-  const checkbox = getCheckboxProps()
-
+function RPSRadio({ value, selectedValue, setSelectedValue, lockedIn }) {
   const icons = {
     rock: <RockIcon boxSize={"44"} />,
     paper: <PaperIcon boxSize={"44"} />,
     scissors: <ScissorsIcon boxSize={"48"} />,
   }
-
+  const checked = value === selectedValue
   return (
-    <Box as="label">
-      <input {...input} disabled={isDisabled} />
-      <Flex
-        disabled={isDisabled}
-        {...checkbox}
-        cursor="pointer"
-        borderWidth="1px"
-        borderRadius="md"
-        boxShadow="md"
-        _checked={{
-          bg: "blue.500",
-          color: "white",
-          borderColor: "blue.500",
-        }}
-        _focus={{
-          boxShadow: "outline",
-        }}
-        _disabled={{
-          opacity: 0.5,
-        }}
-        w={"52"}
-        h={"52"}
-        alignItems={"center"}
-        justifyContent={"center"}
-      >
-        {icons[choice]}
-      </Flex>
-    </Box>
+    <Flex
+      onClick={() => {
+        if (!lockedIn) setSelectedValue(value)
+      }}
+      aria-disabled={lockedIn}
+      aria-checked={checked}
+      cursor={lockedIn ? "not-allowed" : "pointer"}
+      borderWidth="1px"
+      borderRadius="md"
+      boxShadow="md"
+      _disabled={{ opacity: 0.5 }}
+      _checked={{
+        bg: "blue.500",
+        color: "white",
+        borderColor: "blue.500",
+      }}
+      _focus={{
+        boxShadow: "outline",
+      }}
+      px={5}
+      py={3}
+      alignItems="center"
+      justifyContent={"center"}
+    >
+      {icons[value]}
+    </Flex>
   )
 }

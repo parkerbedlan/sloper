@@ -24,20 +24,23 @@ import { useRoomState } from "../../core/hooks/useRoomState"
 import Page404 from "../404"
 
 const RoomPage: BlitzPage = () => {
-  const [roomState, socket, roomStatus] = useRoomState()
+  const [room, socket, roomStatus] = useRoomState()
 
   const router = useRouter()
   const currentUser = useCurrentUser()
 
   useEffect(() => {
-    if (roomState.status === "game" && roomState.code)
-      router.push(Routes.Game({ code: roomState.code }))
-  }, [roomState.status, roomState.code, router])
+    if (roomStatus === "success" && room!.status === "game" && room!.code) {
+      console.log("fdsa", room)
+      router.push(Routes.Game({ code: room!.code }))
+    }
+  }, [roomStatus, room, room?.status, room?.code, router])
 
   const [deleteUserMutation] = useMutation(deleteUser)
 
   if (roomStatus === "404") return <Page404 />
-  if (roomStatus === "loading") return <Text>Loading...</Text>
+  if (roomStatus === "loading" || !room) return <Text>Loading...</Text>
+  if (room?.status === "game") return <Text>Redirecting...</Text>
 
   return (
     <>
@@ -45,8 +48,8 @@ const RoomPage: BlitzPage = () => {
       <Wrapper>
         <Flex alignItems="flex-end" justifyContent={"space-between"} wrap="nowrap">
           <Box>
-            <ClickableCode code={roomState.code} />
-            <Text>Game: {roomState.gameType}</Text>
+            <ClickableCode code={room.code} />
+            <Text>Game: {room.gameType}</Text>
           </Box>
           {currentUser!.role === "HOST" && (
             <Box mb={1}>
@@ -63,7 +66,7 @@ const RoomPage: BlitzPage = () => {
 
         <hr />
         <Text>Players:</Text>
-        {roomState.players.map((player) => (
+        {room.players.map((player) => (
           <Flex key={player.id} alignItems="center">
             {currentUser?.role === "HOST" && player.id !== currentUser!.id && (
               <IconButton
@@ -77,7 +80,7 @@ const RoomPage: BlitzPage = () => {
                     window.confirm(`Are you sure you want to remove ${player.name} from the room?`)
                   ) {
                     // await deleteUserMutation({ id: player.id, roomId: room.id })
-                    await deleteUserMutation({ id: player.id, code: roomState.code })
+                    await deleteUserMutation({ id: player.id, code: room.code })
                     socket?.emit("kicked-player", player.id)
                     // await refetchRoom()
                   }
@@ -92,18 +95,18 @@ const RoomPage: BlitzPage = () => {
         <hr />
         <Box mt={4}>
           <Chatbox
-            messages={roomState.messages}
+            messages={room.messages}
             onSend={(text) => {
               const message: Message = {
                 authorName: currentUser!.name,
-                roomCode: roomState.code,
+                roomCode: room.code,
                 text,
               }
               socket?.emit("new-message", message)
             }}
           />
         </Box>
-        <pre>{JSON.stringify(roomState, null, 2)}</pre>
+        <pre>{JSON.stringify(room, null, 2)}</pre>
       </Wrapper>
     </>
   )

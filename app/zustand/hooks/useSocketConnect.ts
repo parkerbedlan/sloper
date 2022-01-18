@@ -19,12 +19,9 @@ export const useSocketConnect: (
   // const dependencies = query ? Object.values(query) : []
   useEffect(
     () => {
-      console.log("0")
       if (!isReady) return
-      console.log("1")
       if (query && Object.values(query).some((value) => !value)) return
-      console.log("2")
-      console.log("------------------------------")
+      console.log("---------------creating websocket connection---------------")
       setSocket(() => {
         const newSocket = io(process.env.APP_ORIGIN as string, {
           query,

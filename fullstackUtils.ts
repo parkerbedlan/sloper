@@ -21,6 +21,10 @@ export const initialRoomState: RoomState = {
 
 type Handler = (oldRoomState: RoomState | undefined, data: any) => RoomState
 
+const setRoomState: Handler = (_oldRoomState, newRoomState: RoomState) => {
+  return newRoomState
+}
+
 const initialize: Handler = (_oldRoomState, gameType: GameType) => {
   return { ...initialRoomState, gameType }
 }
@@ -50,6 +54,7 @@ const startGame: Handler = (oldRoomState: RoomState, ...args: any) => {
 }
 
 const handlers = {
+  connected: setRoomState,
   initialize: initialize,
   "new-message": addMessage,
   "new-player": addPlayer,
@@ -58,6 +63,7 @@ const handlers = {
 }
 
 export const actionTypes = [
+  "connected",
   "initialize",
   "new-message",
   "new-player",

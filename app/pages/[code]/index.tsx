@@ -21,7 +21,7 @@ import deleteUser from "app/rooms/mutations/deleteUser"
 import checkRoomCode from "app/rooms/queries/checkRoomCode"
 import getRoom from "app/rooms/queries/getRoom"
 import { BlitzPage, Routes, useMutation, useParam, useQuery, useRouter } from "blitz"
-import { initialRoomState, Message, roomReducer, RoomState } from "fullstackUtils"
+import { actionTypes, initialRoomState, Message, roomReducer, RoomState } from "fullstackUtils"
 import React, { useEffect, useRef, useState } from "react"
 import { useSocketConnect } from "../../zustand/hooks/useSocketConnect"
 import Page404 from "../404"
@@ -53,7 +53,7 @@ const RoomPage: BlitzPage = () => {
     }
   }, [roomExists, currentUser, room, code, router, refetchRoom])
 
-  const [roomState, setRoomState] = useState<RoomState | undefined>(undefined)
+  const [roomState, setRoomState] = useState<RoomState>(initialRoomState)
 
   const socket = useSocketConnect(
     {
@@ -61,43 +61,13 @@ const RoomPage: BlitzPage = () => {
       gameType: room ? room.gameType : false,
       currentUser: JSON.stringify(currentUser),
     },
-    [
-      {
-        on: "connected",
-        listener: (data: RoomState) => {
-          console.log("connected")
-          setRoomState(data)
-        },
+    actionTypes.map((actionType) => ({
+      on: actionType,
+      listener: (data: any) => {
+        console.log(actionType, data)
+        setRoomState((roomState) => roomReducer(roomState, actionType, data))
       },
-      {
-        on: "new-player-remote",
-        listener: (data: User) => {
-          console.log("new-player-remote", data)
-          setRoomState((roomState) => roomReducer(roomState, "new-player", data))
-        },
-      },
-      {
-        on: "new-message-remote",
-        listener: (data: Message) => {
-          console.log("new-message-remote", data)
-          setRoomState((roomState) => roomReducer(roomState, "new-message", data))
-        },
-      },
-      {
-        on: "kicked-player-remote",
-        listener: (data: User) => {
-          console.log("kicked-player-remote", data)
-          setRoomState((roomState) => roomReducer(roomState, "kicked-player", data))
-        },
-      },
-      {
-        on: "start-game-remote",
-        listener: (_data: any) => {
-          console.log("start-game-remote")
-          setRoomState((roomState) => roomReducer(roomState, "start-game", null))
-        },
-      },
-    ],
+    })),
     !!room
   )
 
@@ -107,7 +77,7 @@ const RoomPage: BlitzPage = () => {
 
   if (!roomExists) return <Page404 />
   if (!room) return <Text>Loading...</Text>
-  if (!roomState) return <Text>Connecting...</Text>
+  // if (!roomState) return <Text>Connecting...</Text>
 
   return (
     <>

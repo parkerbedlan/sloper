@@ -46,26 +46,28 @@ blitzApp.prepare().then(async () => {
     if (!(roomCode in roomStates)) {
       roomStates[roomCode] = roomReducer(undefined, "initialize", null)
     }
-    let roomState = roomStates[roomCode]
+    // let roomState = roomStates[roomCode]
     // console.log("room", roomState)
 
     if (
       currentUser &&
-      !roomState?.players.some((p) => p.id === currentUser.id) &&
+      !roomStates[roomCode]?.players.some((p) => p.id === currentUser.id) &&
       currentUser.room.code === roomCode
     ) {
       io.to(roomCode).emit("new-player-remote", currentUser)
-      roomState = roomReducer(roomState, "new-player", currentUser)
+      roomStates[roomCode] = roomReducer(roomStates[roomCode], "new-player", currentUser)
     } else {
       io.to(roomCode).emit("player-online-remote", currentUser)
     }
 
-    socket.emit("connected", roomState)
+    socket.emit("connected", roomStates[roomCode])
 
     actionTypes.forEach((actionType) => {
       socket.on(actionType, (data: any) => {
         console.log(actionType, data)
-        roomState = roomReducer(roomState, actionType, data)
+        console.log("before", roomStates[roomCode])
+        roomStates[roomCode] = roomReducer(roomStates[roomCode], actionType, data)
+        console.log("after", roomStates[roomCode])
         io.to(roomCode).emit(`${actionType}-remote`, data)
       })
     })

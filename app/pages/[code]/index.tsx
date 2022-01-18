@@ -21,7 +21,7 @@ import checkRoomCode from "app/rooms/queries/checkRoomCode"
 import getRoom from "app/rooms/queries/getRoom"
 import { BlitzPage, Routes, useMutation, useParam, useQuery, useRouter } from "blitz"
 import { initialRoomState, Message, roomReducer, RoomState } from "fullstackUtils"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { useSocketConnect } from "../../zustand/hooks/useSocketConnect"
 import Page404 from "../404"
 
@@ -126,9 +126,15 @@ const RoomPage: BlitzPage = () => {
         ))}
         <hr />
         <Box mt={4}>
-          <Chatbox messages={roomState.messages} />
+          <Chatbox
+            messages={roomState.messages}
+            onSend={(text) => {
+              const message: Message = { authorName: currentUser!.name, roomCode: code, text }
+              socket?.emit("new-message", message)
+            }}
+          />
         </Box>
-        <Button
+        {/* <Button
           onClick={() => {
             const testMessage: Message = {
               authorName: currentUser!.name,
@@ -139,15 +145,20 @@ const RoomPage: BlitzPage = () => {
           }}
         >
           say hi
-        </Button>
-        <pre>{JSON.stringify(roomState, null, 2)}</pre>
+        </Button> */}
+        {/* <pre>{JSON.stringify(roomState, null, 2)}</pre> */}
       </Wrapper>
     </>
   )
 }
 
-const Chatbox: React.FC<{ messages: Message[] }> = ({ messages }) => {
+const Chatbox: React.FC<{ messages: Message[]; onSend: (text: string) => void }> = ({
+  messages,
+  onSend,
+}) => {
   const [newMessage, setNewMessage] = useState("")
+  const inputField = useRef<HTMLInputElement>()
+
   return (
     <>
       <Flex border="1px" overflowY={"scroll"} flexDirection="column-reverse" h={60}>
@@ -163,9 +174,25 @@ const Chatbox: React.FC<{ messages: Message[] }> = ({ messages }) => {
       <InputGroup>
         <Input
           value={newMessage}
+          ref={inputField as any}
           onChange={(e) => setNewMessage(e.target.value.substring(0, 200))}
+          onKeyPress={(e) => {
+            if (e.key === "Enter") {
+              onSend(newMessage)
+              setNewMessage("")
+            }
+          }}
         />
-        <InputRightAddon as={IconButton} type="submit" bgColor="blue.400">
+        <InputRightAddon
+          as={IconButton}
+          type="submit"
+          bgColor="blue.400"
+          onClick={() => {
+            onSend(newMessage)
+            setNewMessage("")
+            inputField.current?.focus()
+          }}
+        >
           <SendIcon />
         </InputRightAddon>
       </InputGroup>

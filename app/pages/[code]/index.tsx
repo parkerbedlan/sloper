@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Flex,
+  Icon,
   IconButton,
   Input,
   InputGroup,
@@ -24,6 +25,7 @@ import { initialRoomState, Message, roomReducer, RoomState } from "fullstackUtil
 import React, { useEffect, useRef, useState } from "react"
 import { useSocketConnect } from "../../zustand/hooks/useSocketConnect"
 import Page404 from "../404"
+import { ChevronRightIcon } from "@chakra-ui/icons"
 
 const RoomPage: BlitzPage = () => {
   const router = useRouter()
@@ -51,52 +53,84 @@ const RoomPage: BlitzPage = () => {
     }
   }, [roomExists, currentUser, room, code, router, refetchRoom])
 
-  const [roomState, setRoomState] = useState<RoomState>(initialRoomState)
+  const [roomState, setRoomState] = useState<RoomState | undefined>(undefined)
 
-  const socket = useSocketConnect({ roomCode: code, currentUser: JSON.stringify(currentUser) }, [
+  const socket = useSocketConnect(
     {
-      on: "connected",
-      listener: (data: RoomState) => {
-        setRoomState(data)
-      },
+      roomCode: code,
+      gameType: room ? room.gameType : false,
+      currentUser: JSON.stringify(currentUser),
     },
-    {
-      on: "new-player-remote",
-      listener: (data: User) => {
-        console.log("new-player-remote", data)
-        setRoomState((roomState) => roomReducer(roomState, "new-player", data))
+    [
+      {
+        on: "connected",
+        listener: (data: RoomState) => {
+          console.log("connected")
+          setRoomState(data)
+        },
       },
-    },
-    {
-      on: "new-message-remote",
-      listener: (data: Message) => {
-        console.log("new-message-remote", data)
-        setRoomState((roomState) => roomReducer(roomState, "new-message", data))
+      {
+        on: "new-player-remote",
+        listener: (data: User) => {
+          console.log("new-player-remote", data)
+          setRoomState((roomState) => roomReducer(roomState, "new-player", data))
+        },
       },
-    },
-    {
-      on: "kicked-player-remote",
-      listener: (data: User) => {
-        console.log("kicked-player-remote", data)
-        setRoomState((roomState) => roomReducer(roomState, "kicked-player", data))
+      {
+        on: "new-message-remote",
+        listener: (data: Message) => {
+          console.log("new-message-remote", data)
+          setRoomState((roomState) => roomReducer(roomState, "new-message", data))
+        },
       },
-    },
-  ])
+      {
+        on: "kicked-player-remote",
+        listener: (data: User) => {
+          console.log("kicked-player-remote", data)
+          setRoomState((roomState) => roomReducer(roomState, "kicked-player", data))
+        },
+      },
+      {
+        on: "start-game-remote",
+        listener: (_data: any) => {
+          console.log("start-game-remote")
+          setRoomState((roomState) => roomReducer(roomState, "start-game", null))
+        },
+      },
+    ],
+    !!room
+  )
 
-  // useEffect(() => {
-  //   console.log("roomState", roomState)
-  // }, [roomState])
+  useEffect(() => {
+    if (roomState?.status === "game") router.push(Routes.Game({ code }))
+  }, [roomState?.status, code, router])
 
   if (!roomExists) return <Page404 />
   if (!room) return <Text>Loading...</Text>
+  if (!roomState) return <Text>Connecting...</Text>
 
   return (
     <>
       {/* <pre>{roomState.messages.length}</pre> */}
       <Wrapper>
-        {/* <pre>{JSON.stringify(currentUser, null, 2)}</pre> */}
-        <ClickableCode code={code} />
-        <Text>Game: {room.gameType}</Text>
+        <Flex alignItems="flex-end" justifyContent={"space-between"} wrap="nowrap">
+          <Box>
+            <ClickableCode code={code} />
+            <Text>Game: {room.gameType}</Text>
+          </Box>
+          {currentUser!.role === "HOST" && (
+            <Box mb={1}>
+              <Button
+                colorScheme={"green"}
+                rightIcon={<ChevronRightIcon />}
+                onClick={() => socket?.emit("start-game")}
+              >
+                START GAME
+              </Button>
+            </Box>
+          )}
+        </Flex>
+
         <hr />
         <Text>Players:</Text>
         {roomState.players.map((player) => (
@@ -134,19 +168,7 @@ const RoomPage: BlitzPage = () => {
             }}
           />
         </Box>
-        {/* <Button
-          onClick={() => {
-            const testMessage: Message = {
-              authorName: currentUser!.name,
-              roomCode: code,
-              text: "hi",
-            }
-            socket?.emit("new-message", testMessage)
-          }}
-        >
-          say hi
-        </Button> */}
-        {/* <pre>{JSON.stringify(roomState, null, 2)}</pre> */}
+        <pre>{JSON.stringify(roomState, null, 2)}</pre>
       </Wrapper>
     </>
   )

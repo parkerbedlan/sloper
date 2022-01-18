@@ -49,7 +49,9 @@ export const useRoomState: () => [RoomState, SocketOrUndefined, Status] = () => 
       on: actionType,
       listener: (data: any) => {
         console.log(actionType, data)
-        setRoomState((roomState) => roomReducer(roomState, actionType, data))
+        setRoomState((roomState) =>
+          roomReducer(roomState, actionType, data, "client", currentUser || undefined)
+        )
       },
     })),
     !!room

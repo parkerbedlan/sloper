@@ -1,8 +1,8 @@
+import { ChevronRightIcon } from "@chakra-ui/icons"
 import {
   Box,
   Button,
   Flex,
-  Icon,
   IconButton,
   Input,
   InputGroup,
@@ -11,22 +11,17 @@ import {
   Text,
   Tooltip,
 } from "@chakra-ui/react"
-import { User } from "@prisma/client"
 import { CloseIcon } from "app/core/components/icons/CloseIcon"
 import { SendIcon } from "app/core/components/icons/SendIcon"
 import { Wrapper } from "app/core/components/Wrapper"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import Layout from "app/core/layouts/Layout"
 import deleteUser from "app/rooms/mutations/deleteUser"
-import checkRoomCode from "app/rooms/queries/checkRoomCode"
-import getRoom from "app/rooms/queries/getRoom"
-import { BlitzPage, Routes, useMutation, useParam, useQuery, useRouter } from "blitz"
-import { actionTypes, initialRoomState, Message, roomReducer, RoomState } from "fullstackUtils"
+import { BlitzPage, Routes, useMutation, useRouter } from "blitz"
+import { Message } from "fullstackUtils"
 import React, { useEffect, useRef, useState } from "react"
-import { useSocketConnect } from "../../zustand/hooks/useSocketConnect"
-import Page404 from "../404"
-import { ChevronRightIcon } from "@chakra-ui/icons"
 import { useRoomState } from "../../core/hooks/useRoomState"
+import Page404 from "../404"
 
 const RoomPage: BlitzPage = () => {
   const [roomState, socket, roomStatus] = useRoomState()

@@ -2,12 +2,12 @@
 import { BlitzApiHandler } from "blitz"
 import blitz from "blitz/custom-server"
 import express, { Express, Request, Response } from "express"
-import { actionTypes, roomReducer, RoomState } from "fullstackUtils"
+import { actionTypes, privacyFilter, roomReducer, RoomState } from "fullstackUtils"
 import * as http from "http"
 import * as socketio from "socket.io"
 // import { User } from "@prisma/client"
 
-type CurrentUser = {
+export type CurrentUser = {
   role: string
   id: number
   name: string
@@ -45,10 +45,15 @@ blitzApp.prepare().then(async () => {
     const gameType = socket.handshake.query.gameType as string
     if (roomCode) socket.join(roomCode)
     if (!(roomCode in roomStates)) {
-      roomStates[roomCode] = roomReducer(undefined, "initialize", { gameType, code: roomCode })
+      roomStates[roomCode] = roomReducer(
+        undefined,
+        "initialize",
+        { gameType, code: roomCode },
+        "server"
+      )
     }
     // let roomState = roomStates[roomCode]
-    // console.log("room", roomState)
+    // console.log("room", roomStates[roomCode])
 
     if (
       currentUser &&
@@ -56,20 +61,34 @@ blitzApp.prepare().then(async () => {
       currentUser.room.code === roomCode
     ) {
       io.to(roomCode).emit("new-player", currentUser)
-      roomStates[roomCode] = roomReducer(roomStates[roomCode], "new-player", currentUser)
+      roomStates[roomCode] = roomReducer(roomStates[roomCode], "new-player", currentUser, "server")
     } else {
       io.to(roomCode).emit("player-online", currentUser)
     }
 
-    socket.emit("connected", roomStates[roomCode])
+    socket.emit("connected", privacyFilter(roomStates[roomCode]!))
 
     actionTypes.forEach((actionType) => {
       socket.on(actionType, (data: any) => {
         console.log(actionType, data)
         console.log("before", roomStates[roomCode])
-        roomStates[roomCode] = roomReducer(roomStates[roomCode], actionType, data)
+        roomStates[roomCode] = roomReducer(
+          roomStates[roomCode],
+          actionType,
+          data,
+          "server",
+          currentUser
+        )
         console.log("after", roomStates[roomCode])
-        io.to(roomCode).emit(`${actionType}`, data)
+
+        let filteredData: any
+        if (actionType === "rps-choose") {
+          filteredData = { ...data, choice: "private" }
+        } else {
+          filteredData = data
+        }
+
+        io.to(roomCode).emit(actionType, filteredData)
       })
     })
 

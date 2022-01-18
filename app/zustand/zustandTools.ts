@@ -79,14 +79,20 @@ export const createGlobalState = <Type>(initialValue: Type) => {
 
 export const useStatePersist = <Type>(
   initialValue: Type,
-  name: string
+  name: string,
+  isString = false
 ): [Type, Dispatch<SetStateAction<Type>>] => {
   const [value, setValue] = useState<Type>(initialValue)
   useEffect(() => {
     const cachedValue = window.localStorage.getItem(name)
-    const newValue: Type = cachedValue ? JSON.parse(cachedValue) : initialValue
+    console.log("cachedValue", cachedValue)
+    const newValue: Type = cachedValue
+      ? isString
+        ? cachedValue
+        : JSON.parse(cachedValue)
+      : initialValue
     setValue(newValue)
-  }, [name, initialValue])
+  }, [name, initialValue, isString])
   useEffect(() => {
     window.localStorage.setItem(name, "" + value)
   }, [name, value])

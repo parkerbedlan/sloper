@@ -3,7 +3,7 @@ import getRoom from "app/rooms/queries/getRoom"
 import { useSocketConnect } from "app/zustand/hooks/useSocketConnect"
 import { SocketOrUndefined } from "app/zustand/hooks/useSocketStore"
 import { Routes, useParam, useQuery, useRouter } from "blitz"
-import { Room } from "fullstackUtils2"
+import { Room } from "fullstackUtils/internal"
 import { useEffect, useState } from "react"
 import { useCurrentUser } from "./useCurrentUser"
 

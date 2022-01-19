@@ -9,29 +9,11 @@ import {
   Room,
   RPSOption,
   RPSRoom,
+  TTTRoom,
 } from "fullstackUtils2"
 import * as http from "http"
 import * as socketio from "socket.io"
-
-// testing
-// const rooms: Record<string, Room> = {}
-// const roomCode = "ASDF"
-// rooms[roomCode] = new Room(roomCode, "Rock Paper Scissors")
-// rooms[roomCode]?.addPlayer({
-//   id: 69,
-//   name: "PARKOUR",
-//   role: "HOST",
-//   room: { id: 666, code: "ASDF" },
-// })
-// rooms[roomCode]?.addPlayer({
-//   id: 70,
-//   name: "JIMMY",
-//   role: "PLAYER",
-//   room: { id: 666, code: "ASDF" },
-// })
-// console.log(rooms[roomCode])
-// rooms[roomCode] = rooms[roomCode]!.startGame()
-// console.log(rooms[roomCode])
+import { number, string } from "zod"
 
 const { PORT = "3000" } = process.env
 const dev = process.env.NODE_ENV !== "production"
@@ -76,7 +58,6 @@ blitzApp.prepare().then(async () => {
       io.to(roomCode).emit("player-online", currentUser)
     }
 
-    // TODO: privacy filter this
     socket.emit("update", rooms[roomCode]?.getClassifiedData(currentUser.name))
     console.log("update", rooms[roomCode]?.getClassifiedData(currentUser.name))
 
@@ -91,40 +72,36 @@ blitzApp.prepare().then(async () => {
 
     socket.on("new-player", (newPlayer: CurrentUser) => {
       rooms[roomCode]?.addPlayer(newPlayer)
-      // io.to(roomCode).emit("update", rooms[roomCode])
       publicUpdate(rooms[roomCode]!)
     })
 
     socket.on("kicked-player", (userId: number) => {
       rooms[roomCode]?.removePlayer(userId)
-      // io.to(roomCode).emit("update", rooms[roomCode])
       publicUpdate(rooms[roomCode]!)
     })
 
     socket.on("new-message", (newMessage: Message) => {
       rooms[roomCode]?.addMessage(newMessage)
-      // io.to(roomCode).emit("update", rooms[roomCode])
       publicUpdate(rooms[roomCode]!)
-      // to test individual message sending
-      rooms[roomCode]?.players.forEach((player) => {
-        const playerSocket = sockets[player.id]
-        playerSocket?.emit("sup", player.name)
-      })
     })
 
     socket.on("start-game", () => {
       rooms[roomCode] = rooms[roomCode]!.startGame()
-      // io.to(roomCode).emit("update", rooms[roomCode])
       publicUpdate(rooms[roomCode]!)
     })
 
     socket.on("rps-choose", ({ playerName, choice }: { playerName: string; choice: RPSOption }) => {
       ;(rooms[roomCode] as RPSRoom).choose(playerName, choice)
-      // TODO emit private version to each player
-      // io.to(roomCode).emit("update", rooms[roomCode])
-      // publicUpdate(rooms[roomCode]!)
       privateUpdate(rooms[roomCode]!)
     })
+
+    socket.on(
+      "ttt-choose",
+      ({ playerName, row, col }: { playerName: string; row: number; col: number }) => {
+        ;(rooms[roomCode] as TTTRoom).choose(playerName, row, col)
+        publicUpdate(rooms[roomCode]!)
+      }
+    )
 
     socket.on("disconnect", () => {
       console.log("client disconnected")

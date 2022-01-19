@@ -3,11 +3,26 @@ import { resolver } from "blitz"
 import db from "db"
 import { Role } from "types"
 
+export const playerCaps = {
+  "Rock Paper Scissors": 2,
+  "Tic Tac Toe": 2,
+  "Prisoner's Dilemma": 10,
+  Chess: 2,
+}
+
 export default resolver.pipe(resolver.zod(Signup), async ({ name, code, role }, ctx) => {
   const room = await db.room.findFirst({
     where: { code },
-    select: { id: true, isFull: true, players: { select: { id: true, name: true } } },
+    select: {
+      id: true,
+      isFull: true,
+      gameType: true,
+      players: { select: { id: true, name: true } },
+    },
   })
+
+  if (room && room?.players.length >= playerCaps[room?.gameType])
+    throw new Error("room is already full")
 
   if (!room) throw new Error("code: That room does not exist")
 

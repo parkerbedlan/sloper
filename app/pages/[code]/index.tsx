@@ -23,6 +23,13 @@ import React, { useEffect, useRef, useState } from "react"
 import { useRoomState } from "../../core/hooks/useRoomState"
 import Page404 from "../404"
 
+const playerCaps = {
+  "Rock Paper Scissors": 2,
+  "Tic Tac Toe": 2,
+  "Prisoner's Dilemma": 10,
+  Chess: 2,
+}
+
 const RoomPage: BlitzPage = () => {
   const [room, socket, roomStatus] = useRoomState()
 
@@ -65,7 +72,9 @@ const RoomPage: BlitzPage = () => {
         </Flex>
 
         <hr />
-        <Text>Players:</Text>
+        <Text>
+          Players: ({room.players.length}/{playerCaps[room.gameType as keyof typeof playerCaps]})
+        </Text>
         {room.players.map((player) => (
           <Flex key={player.id} alignItems="center">
             {currentUser?.role === "HOST" && player.id !== currentUser!.id && (

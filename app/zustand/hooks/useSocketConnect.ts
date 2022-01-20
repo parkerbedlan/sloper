@@ -21,8 +21,8 @@ export const useSocketConnect: (
       if (query && Object.values(query).some((value) => !value)) return
       console.log("---------------creating websocket connection---------------")
       setSocket(() => {
-        // it appears that we don't have access to process.env.APP_ORIGIN on the frontend
-        const newSocket = io(process.env.NEXT_PUBLIC_ORIGIN as string, {
+        // it appears that we don't have access to process.env.APP_ORIGIN on the frontend, but this works for some reason
+        const newSocket = io(process.env.APP_ORIGIN as string, {
           query,
         })
 

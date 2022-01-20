@@ -14,8 +14,6 @@ export const useSocketConnect: (
   const socket = useSocketStore((state) => state.value)
   const setSocket = useSocketStore((state) => state.set)
 
-  const [oldQuery, setOldQuery] = useState<any>(undefined)
-
   // const dependencies = query ? Object.values(query) : []
   useEffect(
     () => {
@@ -23,7 +21,8 @@ export const useSocketConnect: (
       if (query && Object.values(query).some((value) => !value)) return
       console.log("---------------creating websocket connection---------------")
       setSocket(() => {
-        const newSocket = io(process.env.APP_ORIGIN as string, {
+        // it appears that we don't have access to process.env.APP_ORIGIN on the frontend
+        const newSocket = io(process.env.NEXT_PUBLIC_ORIGIN as string, {
           query,
         })
 

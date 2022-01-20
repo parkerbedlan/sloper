@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react"
 import { CloseIcon } from "app/core/components/icons/CloseIcon"
 import { SendIcon } from "app/core/components/icons/SendIcon"
+import { JsonDump } from "app/core/components/JsonDump"
 import { Wrapper } from "app/core/components/Wrapper"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import Layout from "app/core/layouts/Layout"

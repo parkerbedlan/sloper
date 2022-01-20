@@ -1,0 +1,13 @@
+{
+  "name": "Sloper",
+  "description": "A website where you can play games with your friends",
+  "keywords": ["nodejs", "blitz"],
+  "repository": "https://github.com/parkerbedlan/sloper",
+  "scripts": {
+    "dokku": {
+      "predeploy": "npm run migrate"
+    }
+  },
+  "image": "parkerbedlan/sloper",
+  "addons": ["dokku-postgres"]
+}

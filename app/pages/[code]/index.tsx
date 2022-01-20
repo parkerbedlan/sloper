@@ -18,17 +18,10 @@ import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import Layout from "app/core/layouts/Layout"
 import deleteUser from "app/rooms/mutations/deleteUser"
 import { BlitzPage, Routes, useMutation, useRouter } from "blitz"
-import { Message } from "fullstackUtils/internal"
+import { Message, playerCaps, playerMins } from "fullstackUtils/internal"
 import React, { useEffect, useRef, useState } from "react"
 import { useRoomState } from "../../core/hooks/useRoomState"
 import Page404 from "../404"
-
-const playerCaps = {
-  "Rock Paper Scissors": 2,
-  "Tic Tac Toe": 2,
-  "Prisoner's Dilemma": 10,
-  Chess: 2,
-}
 
 const RoomPage: BlitzPage = () => {
   const [room, socket, roomStatus] = useRoomState()
@@ -49,9 +42,10 @@ const RoomPage: BlitzPage = () => {
   if (roomStatus === "loading" || !room) return <Text>Loading...</Text>
   if (room?.status === "game") return <Text>Redirecting...</Text>
 
+  const playerMinMet = room.players.length >= playerMins[room.gameType!]
+
   return (
     <>
-      {/* <pre>{roomState.messages.length}</pre> */}
       <Wrapper>
         <Flex alignItems="flex-end" justifyContent={"space-between"} wrap="nowrap">
           <Box>
@@ -64,13 +58,13 @@ const RoomPage: BlitzPage = () => {
                 colorScheme={"green"}
                 rightIcon={<ChevronRightIcon />}
                 onClick={() => socket?.emit("start-game")}
+                disabled={!playerMinMet}
               >
                 START GAME
               </Button>
             </Box>
           )}
         </Flex>
-
         <hr />
         <Text>
           Players: ({room.players.length}/{playerCaps[room.gameType as keyof typeof playerCaps]})

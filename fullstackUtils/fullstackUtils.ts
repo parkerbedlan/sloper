@@ -18,6 +18,18 @@ export type PlayerName = string
 export const gameTypes = ["Rock Paper Scissors", "Tic Tac Toe"] as const
 export type GameType = typeof gameTypes[number]
 
+export const playerMins = {
+  "Rock Paper Scissors": 2,
+  "Tic Tac Toe": 2,
+}
+
+export const playerCaps = {
+  "Rock Paper Scissors": 2,
+  "Tic Tac Toe": 2,
+  // "Prisoner's Dilemma": 10,
+  // Chess: 2,
+}
+
 export class Room {
   code: string = ""
   status: "lobby" | "game" = "lobby"
@@ -44,6 +56,7 @@ export class Room {
   }
 
   startGame(): Room {
+    if (this.players.length < playerMins[this.gameType!]) throw Error("not enough players to start")
     if (this.gameType === "Rock Paper Scissors") {
       return new RPSRoom(this.code, this.players)
     } else if (this.gameType === "Tic Tac Toe") {

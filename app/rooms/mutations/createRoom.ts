@@ -10,6 +10,9 @@ const CreateRoom = z.object({
 })
 
 export default resolver.pipe(resolver.zod(CreateRoom), async ({ name, gameType }, ctx) => {
+  // delete day+ old rooms first
+  await db.room.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - 86400000) } } })
+
   let randomCode: string
   let oldRoom: { id: number } | null
   do {

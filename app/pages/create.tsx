@@ -27,8 +27,8 @@ import { GameType } from "types"
 const gameSelections = [
   { gameName: "Rock Paper Scissors", icon: <ScissorsIcon mr={2} /> },
   { gameName: "Tic Tac Toe", icon: <TicTacToeIcon mr={2} /> },
-  { gameName: "Prisoner's Dilemma", icon: <PrisonerIcon mr={2} /> },
-  { gameName: "Chess", icon: <ChessIcon mr={2} /> },
+  // { gameName: "Prisoner's Dilemma", icon: <PrisonerIcon mr={2} /> },
+  // { gameName: "Chess", icon: <ChessIcon mr={2} /> },
 ]
 
 const CreateRoom: BlitzPage = () => {

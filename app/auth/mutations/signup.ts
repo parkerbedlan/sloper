@@ -2,13 +2,7 @@ import { Signup } from "app/auth/validations"
 import { resolver } from "blitz"
 import db from "db"
 import { Role } from "types"
-
-export const playerCaps = {
-  "Rock Paper Scissors": 2,
-  "Tic Tac Toe": 2,
-  "Prisoner's Dilemma": 10,
-  Chess: 2,
-}
+import { playerCaps } from "fullstackUtils/internal"
 
 export default resolver.pipe(resolver.zod(Signup), async ({ name, code, role }, ctx) => {
   const room = await db.room.findFirst({

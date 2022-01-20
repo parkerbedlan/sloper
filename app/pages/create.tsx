@@ -23,6 +23,7 @@ import signup from "app/auth/mutations/signup"
 import createRoom from "app/rooms/mutations/createRoom"
 import { NameField } from "app/auth/components/SignupForm"
 import { GameType } from "types"
+import { useName } from "app/core/hooks/useName"
 
 const gameSelections = [
   { gameName: "Rock Paper Scissors", icon: <ScissorsIcon mr={2} /> },
@@ -35,7 +36,7 @@ const CreateRoom: BlitzPage = () => {
   const router = useRouter()
 
   const [gameIndex, setGameIndex] = useState<number | undefined>(undefined)
-  const [name, setName] = useState("")
+  const [name, setName] = useName()
 
   const [createRoomMutation] = useMutation(createRoom)
   const handleSubmit = async () => {

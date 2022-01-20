@@ -15,6 +15,7 @@ import {
 } from "@chakra-ui/react"
 import { ChangeEvent, useEffect, useState } from "react"
 import checkRoomCode from "app/rooms/queries/checkRoomCode"
+import { useName } from "app/core/hooks/useName"
 
 type SignupFormProps = {
   onSuccess?: () => void
@@ -24,7 +25,7 @@ export const SignupForm = (props: SignupFormProps) => {
   const router = useRouter()
 
   const [code, setCode] = useState("")
-  const [name, setName] = useState("")
+  const [name, setName] = useName()
 
   const [errors, setErrors] = useState({ code: "", name: "" })
   useEffect(() => {

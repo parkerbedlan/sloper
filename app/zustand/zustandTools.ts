@@ -22,7 +22,11 @@ export const createBasicStore = <Type>(initialValue: Type) => {
   return useBasicStore
 }
 
-export const createBasicStorePersist = <Type>(initialValue: Type, name: string) => {
+export const createBasicStorePersist = <Type>(
+  initialValue: Type,
+  name: string,
+  isString = false
+) => {
   type BasicStoreState = {
     value: Type
     initialize: () => void
@@ -32,7 +36,11 @@ export const createBasicStorePersist = <Type>(initialValue: Type, name: string) 
     value: initialValue,
     initialize: () => {
       const cachedValue = window.localStorage.getItem(name)
-      const newValue: Type = cachedValue ? JSON.parse(cachedValue) : initialValue
+      const newValue: Type = cachedValue
+        ? isString
+          ? cachedValue
+          : JSON.parse(cachedValue)
+        : initialValue
       set(() => ({
         value: newValue,
       }))
@@ -52,8 +60,12 @@ export const createBasicStorePersist = <Type>(initialValue: Type, name: string) 
   return useBasicStore
 }
 
-export const createGlobalStatePersist = <Type>(initialValue: Type, name: string) => {
-  const useBasicStore = createBasicStorePersist<Type>(initialValue, name)
+export const createGlobalStatePersist = <Type>(
+  initialValue: Type,
+  name: string,
+  isString = false
+) => {
+  const useBasicStore = createBasicStorePersist<Type>(initialValue, name, isString)
   const useGlobalState: () => [Type, Dispatch<SetStateAction<Type>>] = () => {
     const initialize = useBasicStore((s) => s.initialize)
     useEffect(() => {

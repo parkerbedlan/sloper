@@ -10,6 +10,8 @@ import checkRoomCode from "app/rooms/queries/checkRoomCode"
 import Page404 from "../404"
 import deleteUser from "app/rooms/mutations/deleteUser"
 import logout from "app/auth/mutations/logout"
+import { useStatePersist } from "app/zustand/zustandTools"
+import { useName } from "app/core/hooks/useName"
 
 const Name: BlitzPage = () => {
   const router = useRouter()
@@ -23,7 +25,7 @@ const Name: BlitzPage = () => {
 
   const currentUser = useCurrentUser()
 
-  const [name, setName] = useState("")
+  const [name, setName] = useName()
   const [signupMutation] = useMutation(signup)
   const [logoutMutation] = useMutation(logout)
 

@@ -93,6 +93,7 @@ blitzApp.prepare().then(async () => {
       privateUpdate(rooms[roomCode]!)
     })
 
+    // TODO: no need to get playerName passed as arg from client because we already know through currentUser.name
     socket.on(
       "ttt-choose",
       ({ playerName, row, col }: { playerName: string; row: number; col: number }) => {

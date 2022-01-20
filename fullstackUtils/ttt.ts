@@ -46,6 +46,10 @@ export class TTTRoom extends Room {
     } else if (winner !== "incomplete") {
       this.board.score[winner] += 1
       this.resetBoard()
+    } else {
+      this.board.currentTurn = Object.keys(this.board.assignments).find(
+        (name) => name !== this.board.currentTurn
+      ) as string
     }
   }
 

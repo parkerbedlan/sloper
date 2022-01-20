@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { BlitzPage, Routes, useMutation, useParam, useQuery, useRouter } from "blitz"
 import Layout from "app/core/layouts/Layout"
 import { Wrapper } from "app/core/components/Wrapper"
@@ -28,16 +28,19 @@ const Name: BlitzPage = () => {
   const [logoutMutation] = useMutation(logout)
 
   const [roomExists] = useQuery(checkRoomCode, { code })
-  if (!roomExists) return <Page404 />
 
-  if (currentUser) {
-    if (currentUser.room.code !== code) {
-      logoutMutation()
-    } else {
-      router.push(Routes.RoomPage({ code }))
-      return <Text>Redirecting...</Text>
+  useEffect(() => {
+    if (roomExists && currentUser) {
+      if (currentUser.room.code !== code) {
+        logoutMutation()
+      } else {
+        router.push(Routes.RoomPage({ code }))
+        // return <Text>Redirecting...</Text>
+      }
     }
-  }
+  }, [currentUser, roomExists, code, logoutMutation, router])
+
+  if (!roomExists) return <Page404 />
 
   const handleSubmit = async () => {
     console.log("submitting")

@@ -115,7 +115,6 @@ const RoomPage: BlitzPage = () => {
             }}
           />
         </Box>
-        <pre>{JSON.stringify(room, null, 2)}</pre>
       </Wrapper>
     </>
   )

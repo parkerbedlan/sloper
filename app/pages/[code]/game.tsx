@@ -15,7 +15,6 @@ const Game: BlitzPage = () => {
   const router = useRouter()
   useEffect(() => {
     if (roomStatus === "success" && room!.status === "lobby" && room!.code) {
-      console.log("asdf", room)
       router.push(Routes.RoomPage({ code: room!.code }))
     }
   }, [roomStatus, room, room?.status, room?.code, router])

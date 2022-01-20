@@ -94,9 +94,9 @@ function RPSRadioGroup({ selectedValue, setSelectedValue, lockedIn }) {
 
 function RPSRadio({ value, selectedValue, setSelectedValue, lockedIn }) {
   const icons = {
-    rock: <RockIcon boxSize={"44"} />,
-    paper: <PaperIcon boxSize={"44"} />,
-    scissors: <ScissorsIcon boxSize={"48"} />,
+    rock: <RockIcon boxSize={"6em"} />,
+    paper: <PaperIcon boxSize={"6em"} />,
+    scissors: <ScissorsIcon boxSize={"6em"} />,
   }
   const checked = value === selectedValue
   return (
@@ -119,10 +119,10 @@ function RPSRadio({ value, selectedValue, setSelectedValue, lockedIn }) {
       _focus={{
         boxShadow: "outline",
       }}
-      px={5}
-      py={3}
       alignItems="center"
       justifyContent={"center"}
+      w={"30%"}
+      h={"7em"}
     >
       {icons[value]}
     </Flex>

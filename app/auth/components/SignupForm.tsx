@@ -16,6 +16,7 @@ import {
 import { ChangeEvent, useEffect, useState } from "react"
 import checkRoomCode from "app/rooms/queries/checkRoomCode"
 import { useName } from "app/core/hooks/useName"
+import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 
 type SignupFormProps = {
   onSuccess?: () => void
@@ -26,6 +27,14 @@ export const SignupForm = (props: SignupFormProps) => {
 
   const [code, setCode] = useState("")
   const [name, setName] = useName()
+
+  const currentUser = useCurrentUser()
+  useEffect(() => {
+    if (currentUser) {
+      setCode(currentUser.room.code)
+      setName(currentUser.name)
+    }
+  }, [currentUser, setName])
 
   const [errors, setErrors] = useState({ code: "", name: "" })
   useEffect(() => {
@@ -55,8 +64,12 @@ export const SignupForm = (props: SignupFormProps) => {
     if (!isRoomReady || validationErrors["code"] || validationErrors["name"]) return
     console.log("submitting")
     try {
-      const response = await signupMutation({ name, code, role: "PLAYER" })
-      router.push(`/${code}`)
+      if (name === currentUser?.name && code === currentUser?.room.code) {
+        router.push(`/${code}`)
+      } else {
+        const response = await signupMutation({ name, code, role: "PLAYER" })
+        router.push(`/${code}`)
+      }
     } catch (error: any) {
       const [field, message] = error.message.split(": ")
       if (field === "code" || field === "name") setErrors({ ...errors, [field]: message })

@@ -176,6 +176,7 @@ const ClickableCode = ({ code }: { code: string }) => {
             navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_ORIGIN}/${code}`)
             setIsClicked(true)
           }}
+          fontSize={"2xl"}
         >
           Code: {code} {isClicked && " ✔"}
         </Text>

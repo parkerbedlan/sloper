@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { BlitzPage, Routes, useMutation, useRouter } from "blitz"
 import Layout from "app/core/layouts/Layout"
 import { Wrapper } from "app/core/components/Wrapper"
@@ -120,7 +120,9 @@ export const NameSelection = ({
       </Text>
       <NameField {...{ name, setName }} onEnter={onSubmit} />
       <Flex justifyContent={"flex-end"} m={2}>
-        <Button onClick={onSubmit}>ENTER ROOM</Button>
+        <Button disabled={name.length === 0} onClick={onSubmit}>
+          ENTER ROOM
+        </Button>
       </Flex>
     </>
   )

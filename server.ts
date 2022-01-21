@@ -105,6 +105,11 @@ blitzApp.prepare().then(async () => {
     socket.on("disconnect", () => {
       console.log("client disconnected")
       io.to(roomCode).emit("player-offline", currentUser)
+
+      rooms[roomCode]?.removePlayer(currentUser.id)
+      delete sockets[currentUser.id]
+      publicUpdate(rooms[roomCode]!)
+
       socket.disconnect()
     })
   })

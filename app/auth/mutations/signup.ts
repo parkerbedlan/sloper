@@ -3,6 +3,7 @@ import { resolver } from "blitz"
 import db from "db"
 import { Role } from "types"
 import { playerCaps } from "fullstackUtils/internal"
+import getCurrentUser from "app/users/queries/getCurrentUser"
 
 export default resolver.pipe(resolver.zod(Signup), async ({ name, code, role }, ctx) => {
   const room = await db.room.findFirst({
@@ -15,10 +16,15 @@ export default resolver.pipe(resolver.zod(Signup), async ({ name, code, role }, 
     },
   })
 
-  if (room && room?.players.length >= playerCaps[room?.gameType])
-    throw new Error("room is already full")
-
   if (!room) throw new Error("code: That room does not exist")
+
+  // check if room is already full
+  const currentUser = await getCurrentUser(undefined, ctx)
+  let nonCurrentUsers: typeof room.players
+  if (currentUser) nonCurrentUsers = room.players.filter((player) => player.id !== currentUser.id)
+  else nonCurrentUsers = room.players
+  if (nonCurrentUsers.length >= playerCaps[room?.gameType])
+    throw new Error(`room is already full: ${currentUser} ${nonCurrentUsers}`)
 
   if (room.players.some((player) => player.name === name))
     throw new Error("name: That name is already taken.")
@@ -37,6 +43,10 @@ export default resolver.pipe(resolver.zod(Signup), async ({ name, code, role }, 
 
   const oldUserId = ctx.session.userId
   await ctx.session.$create({ userId: user.id, role: user.role as Role })
-  if (oldUserId) await db.user.delete({ where: { id: oldUserId } })
+  try {
+    if (oldUserId) await db.user.delete({ where: { id: oldUserId } })
+  } catch {
+    // do nothing, because the error was most likely triggered by the old user already being deleted, which isn't a problem.
+  }
   return user
 })

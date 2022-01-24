@@ -1,3 +1,4 @@
+import { gameTypes } from "fullstackUtils/internal"
 import { z } from "zod"
 
 export const code = z
@@ -14,12 +15,7 @@ export const name = z
 
 export const role = z.enum(["SPECTATOR", "PLAYER", "HOST"])
 
-export const gameType = z.enum([
-  "Rock Paper Scissors",
-  "Tic Tac Toe",
-  "Prisoner's Dilemma",
-  "Chess",
-])
+export const gameType = z.enum(gameTypes)
 
 export const Signup = z.object({
   code,

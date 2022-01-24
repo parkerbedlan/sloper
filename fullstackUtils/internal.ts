@@ -3,3 +3,4 @@
 export * from "./fullstackUtils"
 export * from "./rps"
 export * from "./ttt"
+export * from "./mines"

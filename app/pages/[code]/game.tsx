@@ -1,10 +1,11 @@
 import { Text } from "@chakra-ui/react"
 import { Wrapper } from "app/core/components/Wrapper"
 import Layout from "app/core/layouts/Layout"
+import { MinesGame } from "app/game/mines/MinesGame"
 import { RPSGame } from "app/game/rps/components/RPSGame"
 import { TTTGame } from "app/game/ttt/components/TTTGame"
 import { BlitzPage, Routes, useRouter } from "blitz"
-import { RPSRoomData, TTTRoomData } from "fullstackUtils/internal"
+import { MinesRoomData, RPSRoomData, TTTRoomData } from "fullstackUtils/internal"
 import React, { useEffect } from "react"
 import { useRoomState } from "../../core/hooks/useRoomState"
 import Page404 from "../404"
@@ -29,6 +30,8 @@ const Game: BlitzPage = () => {
     gameNode = <RPSGame {...{ room: room as RPSRoomData, socket }} />
   else if (room.gameType === "Tic Tac Toe")
     gameNode = <TTTGame {...{ room: room as TTTRoomData, socket }} />
+  else if (room.gameType === "Minesweeper")
+    gameNode = <MinesGame {...{ room: room as MinesRoomData, socket }} />
 
   return (
     <>

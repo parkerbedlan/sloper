@@ -1,4 +1,4 @@
-import { Text } from "@chakra-ui/react"
+import { Box, Text } from "@chakra-ui/react"
 import { Wrapper } from "app/core/components/Wrapper"
 import Layout from "app/core/layouts/Layout"
 import { MinesGame } from "app/game/mines/MinesGame"
@@ -27,17 +27,25 @@ const Game: BlitzPage = () => {
 
   let gameNode: React.ReactNode = undefined
   if (room.gameType === "Rock Paper Scissors")
-    gameNode = <RPSGame {...{ room: room as RPSRoomData, socket }} />
+    gameNode = (
+      <Wrapper>
+        <RPSGame {...{ room: room as RPSRoomData, socket }} />
+      </Wrapper>
+    )
   else if (room.gameType === "Tic Tac Toe")
-    gameNode = <TTTGame {...{ room: room as TTTRoomData, socket }} />
+    gameNode = (
+      <Wrapper>
+        <TTTGame {...{ room: room as TTTRoomData, socket }} />
+      </Wrapper>
+    )
   else if (room.gameType === "Minesweeper")
-    gameNode = <MinesGame {...{ room: room as MinesRoomData, socket }} />
+    gameNode = (
+      <Box m={2}>
+        <MinesGame {...{ room: room as MinesRoomData, socket }} />
+      </Box>
+    )
 
-  return (
-    <>
-      <Wrapper>{gameNode}</Wrapper>
-    </>
-  )
+  return <>{gameNode}</>
 }
 
 Game.suppressFirstRenderFlicker = true

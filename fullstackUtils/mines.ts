@@ -3,16 +3,26 @@
 import { CurrentUser, Room } from "./internal"
 
 export type MinesSquareOption = "_" | "?" | "flag" | number | "blownup" | "wrong" | "bomb"
+export type MinesPreset = "beginner" | "intermediate" | "expert" | "custom"
+
+export type MinesChangeSettingsParameters = {
+  preset: MinesPreset
+  height?: number
+  width?: number
+  numberOfBombs?: number
+}
+
 export class MinesRoom extends Room {
   status: "lobby" | "game" = "game"
   settings: {
-    preset: "beginner" | "intermediate" | "expert" | "custom"
+    preset: MinesPreset
     height: number
     width: number
     numberOfBombs: number
   }
   private board: {
     hasBomb: boolean[]
+    cleared: boolean[]
     bombCounter: number
     squares: MinesSquareOption[]
     numberOfClicks: number
@@ -27,16 +37,11 @@ export class MinesRoom extends Room {
 
   constructor(code: string, players: CurrentUser[]) {
     super(code, "Minesweeper", players)
-    this.changeSettings("intermediate")
+    this.changeSettings({ preset: "intermediate" })
     this.resetBoard()
   }
 
-  changeSettings(
-    preset: typeof this.settings.preset,
-    height?: number,
-    width?: number,
-    numberOfBombs?: number
-  ) {
+  changeSettings({ preset, height, width, numberOfBombs }: MinesChangeSettingsParameters) {
     if (preset !== "custom") {
       this.settings = { ...MinesRoom.presets[preset], preset }
     } else if (height && width && numberOfBombs) {
@@ -48,14 +53,23 @@ export class MinesRoom extends Room {
 
   resetBoard() {
     const numberOfSquares = this.settings.height * this.settings.width
-    this.board.bombCounter = this.settings.numberOfBombs
-    this.board.squares = Array(numberOfSquares).fill("_")
-    this.board.hasBomb = Array(numberOfSquares).fill(false)
-    this.board.numberOfClicks = 0
+    const board: any = {}
+    board.bombCounter = this.settings.numberOfBombs
+    board.squares = Array(numberOfSquares).fill("_")
+    board.hasBomb = Array(numberOfSquares).fill(false)
+    board.cleared = Array(numberOfSquares).fill(false)
+    board.numberOfClicks = 0
+    this.board = board
     this.timer = 0
   }
 
   rightClick(squareNum: number) {
+    this.board.numberOfClicks += 1
+
+    if (this.board.numberOfClicks === 1) {
+      return this.firstClick(squareNum)
+    }
+
     const cycle = { _: "flag", flag: "?", "?": "_" }
 
     const currentVal = this.board.squares[squareNum]
@@ -65,7 +79,9 @@ export class MinesRoom extends Room {
   }
 
   leftClick(squareNum: number) {
-    if (this.board.numberOfClicks === 0) {
+    this.board.numberOfClicks += 1
+
+    if (this.board.numberOfClicks === 1) {
       return this.firstClick(squareNum)
     }
 
@@ -79,9 +95,15 @@ export class MinesRoom extends Room {
     }
   }
 
+  getClassifiedData(_: any) {
+    const { board, ...everythingElse } = this
+    const { hasBomb, cleared, ...classifiedBoard } = board
+    return { board: classifiedBoard, ...everythingElse }
+  }
+
   private neighborBombs(squareNum: number): number {
     const neighbors = this.neighbors(squareNum)
-    const bombs = neighbors.filter((neighbor) => this.board.squares[neighbor] === "bomb").length
+    const bombs = neighbors.filter((neighbor) => this.board.hasBomb[neighbor]).length
     return bombs
   }
 
@@ -93,7 +115,9 @@ export class MinesRoom extends Room {
 
   private clearNeighbors(squareNum: number) {
     const neighbors = this.neighbors(squareNum)
-    neighbors.forEach((neighbor) => this.clear(neighbor))
+    neighbors
+      .filter((neighbor) => this.board.squares[neighbor] !== "flag")
+      .forEach((neighbor) => this.clear(neighbor))
   }
 
   private neighbors(squareNum: number): number[] {
@@ -121,11 +145,13 @@ export class MinesRoom extends Room {
     if (this.board.hasBomb[squareNum]) {
       this.board.squares[squareNum] = "blownup"
       this.gameOver()
-    } else {
+    } else if (!this.board.cleared[squareNum]) {
+      this.board.cleared[squareNum] = true
+      console.log("clearing", squareNum)
       this.board.squares[squareNum] = this.neighborBombs(squareNum)
       if (this.board.squares[squareNum] === 0) {
-        const neighbors = this.neighbors(squareNum)
-        neighbors.forEach((neighbor) => this.clear(squareNum))
+        console.log("clear neighbors of", squareNum)
+        this.clearNeighbors(squareNum)
       }
     }
   }
@@ -134,7 +160,7 @@ export class MinesRoom extends Room {
     let immune = new Set([squareNum, ...this.neighbors(squareNum)])
 
     let eligible = Array.from(Array(this.board.hasBomb.length).keys()) // 0 to N
-    eligible = eligible.filter((num) => immune.has(num))
+    eligible = eligible.filter((num) => !immune.has(num))
     let bombCount = this.settings.numberOfBombs
 
     while (bombCount > 0) {
@@ -145,14 +171,18 @@ export class MinesRoom extends Room {
       bombCount--
     }
 
-    this.leftClick(squareNum)
+    immune.forEach((num) => (this.board.squares[num] = this.neighborBombs(num)))
+
+    this.clear(squareNum)
+
+    // TODO: start timer (or return value that tells the server to)
   }
 
   private gameOver() {
     Array.from(Array(this.board.squares.length).keys()).forEach((squareNum) => {
       const square = this.board.squares[squareNum]
       const hasBomb = this.board.hasBomb[squareNum]
-      if (square === "flag" && hasBomb) {
+      if (square === "flag" && !hasBomb) {
         this.board.squares[squareNum] = "wrong"
       } else if ((square === "?" || square === "_") && hasBomb) {
         this.board.squares[squareNum] = "bomb"
@@ -160,7 +190,8 @@ export class MinesRoom extends Room {
         this.board.squares[squareNum] = this.neighborBombs(squareNum)
       }
     })
-    throw Error("not yet implemented")
+
+    // TODO: end timer (or return value that tells the server to)
   }
 }
 

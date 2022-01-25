@@ -69,7 +69,7 @@ export class Room {
     return this
   }
 
-  getClassifiedData(playerName: string) {
+  getClassifiedData(playerName: string): any {
     return { ...this }
   }
 }

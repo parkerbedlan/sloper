@@ -9,6 +9,9 @@ import {
   RPSOption,
   RPSRoom,
   TTTRoom,
+  MinesPreset,
+  MinesRoom,
+  MinesChangeSettingsParameters,
 } from "fullstackUtils/internal"
 import * as http from "http"
 import * as socketio from "socket.io"
@@ -57,7 +60,7 @@ blitzApp.prepare().then(async () => {
     }
 
     socket.emit("update", rooms[roomCode]?.getClassifiedData(currentUser.name))
-    console.log("update", rooms[roomCode]?.getClassifiedData(currentUser.name))
+    // console.log("update", rooms[roomCode]?.getClassifiedData(currentUser.name))
 
     const publicUpdate = (room: Room) => io.to(roomCode).emit("update", room)
 
@@ -67,6 +70,9 @@ blitzApp.prepare().then(async () => {
         playerSocket?.emit("update", room.getClassifiedData(player.name))
       })
     }
+
+    const privateUpdateToAll = (room: Room) =>
+      io.to(roomCode).emit("update", room.getClassifiedData(""))
 
     socket.on("new-player", (newPlayer: CurrentUser) => {
       rooms[roomCode]?.addPlayer(newPlayer)
@@ -101,6 +107,29 @@ blitzApp.prepare().then(async () => {
         publicUpdate(rooms[roomCode]!)
       }
     )
+
+    socket.on(
+      "mines-change-settings",
+      ({ preset, height, width, numberOfBombs }: MinesChangeSettingsParameters) => {
+        ;(rooms[roomCode] as MinesRoom).changeSettings({ preset, height, width, numberOfBombs })
+        privateUpdateToAll(rooms[roomCode]!)
+      }
+    )
+
+    socket.on("mines-reset-board", () => {
+      ;(rooms[roomCode] as MinesRoom).resetBoard()
+      privateUpdateToAll(rooms[roomCode]!)
+    })
+
+    socket.on("mines-left-click", (squareNum: number) => {
+      ;(rooms[roomCode] as MinesRoom).leftClick(squareNum)
+      privateUpdateToAll(rooms[roomCode]!)
+    })
+
+    socket.on("mines-right-click", (squareNum: number) => {
+      ;(rooms[roomCode] as MinesRoom).rightClick(squareNum)
+      privateUpdateToAll(rooms[roomCode]!)
+    })
 
     socket.on("disconnect", () => {
       console.log("client disconnected")

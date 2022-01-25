@@ -87,6 +87,9 @@ const GameSelection = ({
                     <Text textColor={"red"} ml={1}>
                       (computer only)
                     </Text>
+                    <Text textColor={"red"} ml={1} fontSize="xs">
+                      *BETA*
+                    </Text>
                   </>
                 ) : (
                   gameName

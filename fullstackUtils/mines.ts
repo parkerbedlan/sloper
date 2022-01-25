@@ -3,7 +3,8 @@
 import { CurrentUser, Room } from "./internal"
 
 export type MinesSquareOption = "_" | "?" | "flag" | number | "blownup" | "wrong" | "bomb"
-export type MinesPreset = "beginner" | "intermediate" | "expert" | "custom"
+export const minesPresets = ["beginner", "intermediate", "expert", "custom"] as const
+export type MinesPreset = typeof minesPresets[number]
 
 export type MinesChangeSettingsParameters = {
   preset: MinesPreset
@@ -22,7 +23,7 @@ export class MinesRoom extends Room {
   }
   private board: {
     hasBomb: boolean[]
-    cleared: boolean[]
+    cleared: Set<number>
     bombCounter: number
     squares: MinesSquareOption[]
     numberOfClicks: number
@@ -49,6 +50,7 @@ export class MinesRoom extends Room {
     } else {
       throw Error("parameter error: custom preset must include height, width, and numberOfBombs")
     }
+    this.resetBoard()
   }
 
   resetBoard() {
@@ -57,7 +59,7 @@ export class MinesRoom extends Room {
     board.bombCounter = this.settings.numberOfBombs
     board.squares = Array(numberOfSquares).fill("_")
     board.hasBomb = Array(numberOfSquares).fill(false)
-    board.cleared = Array(numberOfSquares).fill(false)
+    board.cleared = new Set()
     board.numberOfClicks = 0
     this.board = board
     this.timer = 0
@@ -75,6 +77,11 @@ export class MinesRoom extends Room {
     const currentVal = this.board.squares[squareNum]
     if (currentVal && currentVal in cycle) {
       this.board.squares[squareNum] = cycle[currentVal]
+      if (this.board.squares[squareNum] === "flag") {
+        this.board.bombCounter -= 1
+      } else if (this.board.squares[squareNum] === "?") {
+        this.board.bombCounter += 1
+      }
     }
   }
 
@@ -145,10 +152,13 @@ export class MinesRoom extends Room {
     if (this.board.hasBomb[squareNum]) {
       this.board.squares[squareNum] = "blownup"
       this.gameOver()
-    } else if (!this.board.cleared[squareNum]) {
-      this.board.cleared[squareNum] = true
+    } else if (!this.board.cleared.has(squareNum)) {
+      this.board.cleared.add(squareNum)
       console.log("clearing", squareNum)
       this.board.squares[squareNum] = this.neighborBombs(squareNum)
+      if (this.board.cleared.size === this.board.squares.length - this.settings.numberOfBombs)
+        return this.gameOver()
+
       if (this.board.squares[squareNum] === 0) {
         console.log("clear neighbors of", squareNum)
         this.clearNeighbors(squareNum)

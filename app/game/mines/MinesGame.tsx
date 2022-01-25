@@ -1,14 +1,41 @@
-import { Box, Button, Flex, Grid, GridItem, Text } from "@chakra-ui/react"
+import {
+  Accordion,
+  AccordionButton,
+  AccordionIcon,
+  AccordionItem,
+  AccordionPanel,
+  Box,
+  Button,
+  Flex,
+  Grid,
+  GridItem,
+  Text,
+} from "@chakra-ui/react"
 import { MineIcon } from "app/core/components/icons/MineIcon"
 import { SocketOrUndefined } from "app/zustand/hooks/useSocketStore"
-import { MinesRoomData, MinesSquareOption } from "fullstackUtils/internal"
-import React from "react"
+import {
+  MinesPreset,
+  minesPresets,
+  MinesRoomData,
+  MinesSquareOption,
+} from "fullstackUtils/internal"
+import React, { useEffect, useState } from "react"
 import { CloseIcon } from "@chakra-ui/icons"
 import { Image } from "blitz"
 
 type MinesGameProps = { room: MinesRoomData; socket: SocketOrUndefined }
 
 export const MinesGame: React.FC<MinesGameProps> = ({ room, socket }) => {
+  const [selectedPreset, setSelectedPreset] = useState<MinesPreset | undefined>(undefined)
+
+  useEffect(() => {
+    setSelectedPreset(room.settings.preset)
+  }, [room.settings.preset])
+
+  useEffect(() => {
+    if (selectedPreset) socket?.emit("mines-change-settings", { preset: selectedPreset })
+  }, [selectedPreset, socket])
+
   return (
     <>
       <Flex>
@@ -24,10 +51,8 @@ export const MinesGame: React.FC<MinesGameProps> = ({ room, socket }) => {
             const handleClick = (e: any) => {
               e.preventDefault()
               if (e.type === "click") {
-                // console.log("left click", squareNum)
                 socket?.emit("mines-left-click", squareNum)
               } else if (e.type === "contextmenu") {
-                // console.log("right click", squareNum)
                 socket?.emit("mines-right-click", squareNum)
               }
             }
@@ -35,13 +60,33 @@ export const MinesGame: React.FC<MinesGameProps> = ({ room, socket }) => {
             return <Square key={squareNum} value={value} onClick={handleClick} />
           })}
         </Grid>{" "}
-        <Button
-          onClick={() => {
-            socket?.emit("mines-reset-board")
-          }}
-        >
-          Reset
-        </Button>
+        <Flex direction="column">
+          <Button
+            onClick={() => {
+              socket?.emit("mines-reset-board")
+            }}
+          >
+            Reset
+          </Button>
+          <Accordion allowToggle>
+            <AccordionItem>
+              <AccordionButton>
+                Settings
+                <AccordionIcon />
+              </AccordionButton>
+              {/* TODO: put in radio comparable to rps radio */}
+              <AccordionPanel>
+                <MyRadioGroup
+                  selectedValue={selectedPreset}
+                  setSelectedValue={setSelectedPreset}
+                  lockedIn={false}
+                />
+              </AccordionPanel>
+            </AccordionItem>
+          </Accordion>
+          <Text>Bombs left: {room.board.bombCounter}</Text>
+          <Text>Time passed: {room.timer}</Text>
+        </Flex>
       </Flex>
     </>
   )
@@ -85,8 +130,59 @@ const Square: React.FC<{ value: MinesSquareOption; onClick: (e: any) => void }> 
       border="1px"
       // borderColor={"gray.400"}
       bgColor={typeof value === "number" ? "gray.400" : value === "blownup" ? "red" : "gray.200"}
+      userSelect={"none"}
     >
       {display}
     </GridItem>
+  )
+}
+
+const MyRadioGroup = ({ selectedValue, setSelectedValue, lockedIn }) => {
+  return (
+    <>
+      <Flex justifyContent={"space-around"} direction="column">
+        {minesPresets.map((value) => {
+          return (
+            <MyRadio
+              key={value}
+              {...{ value, selectedValue, setSelectedValue, disabled: lockedIn }}
+            />
+          )
+        })}
+      </Flex>
+    </>
+  )
+}
+
+const MyRadio = ({ value, selectedValue, setSelectedValue, disabled }) => {
+  const checked = value === selectedValue
+  return (
+    <Flex
+      onClick={() => {
+        if (!disabled) setSelectedValue(value)
+      }}
+      aria-disabled={disabled}
+      aria-checked={checked}
+      cursor={disabled ? "not-allowed" : "pointer"}
+      borderWidth="1px"
+      borderRadius="md"
+      boxShadow="md"
+      _disabled={{ opacity: 0.5 }}
+      _checked={{
+        bg: "blue.500",
+        color: "white",
+        borderColor: "blue.500",
+      }}
+      _focus={{
+        boxShadow: "outline",
+      }}
+      alignItems="center"
+      justifyContent={"center"}
+      p={2}
+      // w={"30%"}
+      // h={"7em"}
+    >
+      {value}
+    </Flex>
   )
 }

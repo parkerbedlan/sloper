@@ -35,6 +35,7 @@ blitzApp.prepare().then(async () => {
   type PlayerId = number
   const sockets: Record<PlayerId, socketio.Socket> = {}
   const rooms: Record<string, Room> = {}
+  const timers: Record<string, NodeJS.Timer> = {}
 
   io.on("connection", (socket: socketio.Socket) => {
     console.log("connection", socket.handshake.query)
@@ -122,8 +123,26 @@ blitzApp.prepare().then(async () => {
     })
 
     socket.on("mines-left-click", (squareNum: number) => {
+      const gameStatusBefore = (rooms[roomCode] as MinesRoom).gameStatus
+
       ;(rooms[roomCode] as MinesRoom).leftClick(squareNum)
       privateUpdateToAll(rooms[roomCode]!)
+
+      const gameStatusAfter = (rooms[roomCode] as MinesRoom).gameStatus
+
+      if (gameStatusBefore === "ready" && gameStatusAfter === "in progress") {
+        if (!timers[roomCode]) {
+          timers[roomCode] = setInterval(() => {
+            io.to(roomCode).emit("tick", (rooms[roomCode] as MinesRoom).tick())
+          }, 1000)
+        }
+      } else if (
+        gameStatusBefore === "in progress" &&
+        (gameStatusAfter === "lost" || gameStatusAfter === "won")
+      ) {
+        clearInterval(timers[roomCode]!)
+        delete timers[roomCode]
+      }
     })
 
     socket.on("mines-right-click", (squareNum: number) => {

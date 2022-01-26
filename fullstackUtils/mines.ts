@@ -2,6 +2,8 @@
 
 import { CurrentUser, Room } from "./internal"
 
+export type GameStatus = "ready" | "in progress" | "lost" | "won"
+
 export type MinesSquareOption = "_" | "?" | "flag" | number | "blownup" | "wrong" | "bomb"
 export const minesPresets = ["beginner", "intermediate", "expert", "custom"] as const
 export type MinesPreset = typeof minesPresets[number]
@@ -15,6 +17,7 @@ export type MinesChangeSettingsParameters = {
 
 export class MinesRoom extends Room {
   status: "lobby" | "game" = "game"
+  gameStatus: GameStatus
   settings: {
     preset: MinesPreset
     height: number
@@ -63,6 +66,7 @@ export class MinesRoom extends Room {
     board.numberOfClicks = 0
     this.board = board
     this.timer = 0
+    this.gameStatus = "ready"
   }
 
   rightClick(squareNum: number) {
@@ -100,6 +104,11 @@ export class MinesRoom extends Room {
     } else if (currentVal === "_" || currentVal === "?") {
       this.clear(squareNum)
     }
+  }
+
+  tick() {
+    this.timer += 1
+    return this.timer
   }
 
   getClassifiedData(_: any) {
@@ -151,13 +160,16 @@ export class MinesRoom extends Room {
   private clear(squareNum: number) {
     if (this.board.hasBomb[squareNum]) {
       this.board.squares[squareNum] = "blownup"
+      this.gameStatus = "lost"
       this.gameOver()
     } else if (!this.board.cleared.has(squareNum)) {
       this.board.cleared.add(squareNum)
       console.log("clearing", squareNum)
       this.board.squares[squareNum] = this.neighborBombs(squareNum)
-      if (this.board.cleared.size === this.board.squares.length - this.settings.numberOfBombs)
+      if (this.board.cleared.size === this.board.squares.length - this.settings.numberOfBombs) {
+        this.gameStatus = "won"
         return this.gameOver()
+      }
 
       if (this.board.squares[squareNum] === 0) {
         console.log("clear neighbors of", squareNum)
@@ -185,6 +197,7 @@ export class MinesRoom extends Room {
 
     this.clear(squareNum)
 
+    this.gameStatus = "in progress"
     // TODO: start timer (or return value that tells the server to)
   }
 
@@ -206,6 +219,7 @@ export class MinesRoom extends Room {
 }
 
 export type MinesRoomData = {
+  gameStatus: GameStatus
   settings: {
     preset: "beginner" | "intermediate" | "expert" | "custom"
     height: number

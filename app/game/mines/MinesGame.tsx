@@ -24,7 +24,6 @@ import React, { useEffect, useState } from "react"
 import { CloseIcon } from "@chakra-ui/icons"
 import { Image } from "blitz"
 import useWindowDimensions from "app/core/hooks/useWindowDimensions"
-import { JsonDump } from "app/core/components/JsonDump"
 
 type MinesGameProps = { room: MinesRoomData; socket: SocketOrUndefined }
 
@@ -47,9 +46,12 @@ export const MinesGame: React.FC<MinesGameProps> = ({ room, socket }) => {
   }, [room.settings])
 
   useEffect(() => {
-    if (selectedPreset && selectedPreset !== "custom")
-      socket?.emit("mines-change-settings", { preset: selectedPreset })
-  }, [selectedPreset, socket])
+    if (room.gameStatus === "won") {
+      alert(`Congrats, you won!\nTime: ${room.timer}\nClicks: ${room.board.numberOfClicks}`)
+    } else if (room.gameStatus === "lost") {
+      alert(`Rip you lost, gg.`)
+    }
+  }, [room.gameStatus, room.timer, room.board.numberOfClicks])
 
   const { width, height } = useWindowDimensions()
   const aspectRatio = width / height
@@ -98,9 +100,14 @@ export const MinesGame: React.FC<MinesGameProps> = ({ room, socket }) => {
               </AccordionButton>
               <AccordionPanel>
                 <Flex direction="column">
-                  <MyRadioGroup
+                  <SettingsRadioGroup
                     selectedValue={selectedPreset}
-                    setSelectedValue={setSelectedPreset}
+                    setSelectedValue={(value: MinesPreset) => {
+                      setSelectedPreset(value)
+                      if (value !== "custom") {
+                        socket?.emit("mines-change-settings", { preset: value })
+                      }
+                    }}
                     lockedIn={false}
                   />
                   {selectedPreset === "custom" && (
@@ -175,15 +182,20 @@ const Square: React.FC<{ value: MinesSquareOption; onClick: (e: any) => void }> 
   )
 }
 
-const MyRadioGroup = ({ selectedValue, setSelectedValue, lockedIn }) => {
+const SettingsRadioGroup = ({ selectedValue, setSelectedValue, lockedIn }) => {
   return (
     <>
       <Flex justifyContent={"space-around"} direction="column">
         {minesPresets.map((value) => {
           return (
-            <MyRadio
+            <SettingsRadio
               key={value}
-              {...{ value, selectedValue, setSelectedValue, disabled: lockedIn }}
+              {...{ value, selectedValue, disabled: lockedIn }}
+              onClick={() => {
+                setSelectedValue(value)
+                if (value !== "custom") {
+                }
+              }}
             />
           )
         })}
@@ -192,12 +204,14 @@ const MyRadioGroup = ({ selectedValue, setSelectedValue, lockedIn }) => {
   )
 }
 
-const MyRadio = ({ value, selectedValue, setSelectedValue, disabled }) => {
+const SettingsRadio = ({ value, selectedValue, onClick, disabled }) => {
   const checked = value === selectedValue
   return (
     <Flex
       onClick={() => {
-        if (!disabled) setSelectedValue(value)
+        if (!disabled && !checked) {
+          onClick()
+        }
       }}
       aria-disabled={disabled}
       aria-checked={checked}
@@ -217,8 +231,6 @@ const MyRadio = ({ value, selectedValue, setSelectedValue, disabled }) => {
       alignItems="center"
       justifyContent={"center"}
       p={2}
-      // w={"30%"}
-      // h={"7em"}
     >
       {value}
     </Flex>

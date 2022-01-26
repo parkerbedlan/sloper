@@ -1,9 +1,3 @@
-import { useMutation, validateZodSchema, useQuery, useRouter } from "blitz"
-import { LabeledTextField } from "app/core/components/LabeledTextField"
-import { Form, FORM_ERROR } from "app/core/components/Form"
-import signup from "app/auth/mutations/signup"
-import { Signup } from "app/auth/validations"
-import { Field, Formik, useField, useFormikContext } from "formik"
 import {
   Button,
   Flex,
@@ -13,10 +7,13 @@ import {
   Input,
   Text,
 } from "@chakra-ui/react"
-import { ChangeEvent, useEffect, useState } from "react"
-import checkRoomCode from "app/rooms/queries/checkRoomCode"
-import { useName } from "app/core/hooks/useName"
+import signup from "app/auth/mutations/signup"
+import { Signup } from "app/auth/validations"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
+import { useName } from "app/core/hooks/useName"
+import checkRoomCode from "app/rooms/queries/checkRoomCode"
+import { useMutation, useQuery, useRouter, validateZodSchema } from "blitz"
+import { useEffect, useState } from "react"
 
 type SignupFormProps = {
   onSuccess?: () => void

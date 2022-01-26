@@ -9,6 +9,7 @@ import {
   Flex,
   Grid,
   GridItem,
+  Input,
   Text,
 } from "@chakra-ui/react"
 import { MineIcon } from "app/core/components/icons/MineIcon"
@@ -22,30 +23,48 @@ import {
 import React, { useEffect, useState } from "react"
 import { CloseIcon } from "@chakra-ui/icons"
 import { Image } from "blitz"
+import useWindowDimensions from "app/core/hooks/useWindowDimensions"
+import { JsonDump } from "app/core/components/JsonDump"
 
 type MinesGameProps = { room: MinesRoomData; socket: SocketOrUndefined }
 
 export const MinesGame: React.FC<MinesGameProps> = ({ room, socket }) => {
   const [selectedPreset, setSelectedPreset] = useState<MinesPreset | undefined>(undefined)
 
+  const [customSettings, setCustomSettings] = useState<
+    { width: number; height: number; numberOfBombs: number } | undefined
+  >(undefined)
+
   useEffect(() => {
     setSelectedPreset(room.settings.preset)
   }, [room.settings.preset])
 
   useEffect(() => {
-    if (selectedPreset) socket?.emit("mines-change-settings", { preset: selectedPreset })
+    if (room.settings) {
+      const { height, width, numberOfBombs } = room.settings
+      setCustomSettings({ height, width, numberOfBombs })
+    }
+  }, [room.settings])
+
+  useEffect(() => {
+    if (selectedPreset && selectedPreset !== "custom")
+      socket?.emit("mines-change-settings", { preset: selectedPreset })
   }, [selectedPreset, socket])
+
+  const { width, height } = useWindowDimensions()
+  const aspectRatio = width / height
+
+  const squareSideLength =
+    room.settings.width / room.settings.height < aspectRatio
+      ? `${Math.floor(100 / room.settings.height)}vh`
+      : `${Math.floor(100 / room.settings.width)}vw`
 
   return (
     <>
       <Flex>
         <Grid
-          templateColumns={`repeat(${room.settings.width},${Math.floor(
-            100 / room.settings.height
-          )}vh)`}
-          templateRows={`repeat(${room.settings.height}, ${Math.floor(
-            100 / room.settings.height
-          )}vh)`}
+          templateColumns={`repeat(${room.settings.width}, ${squareSideLength})`}
+          templateRows={`repeat(${room.settings.height}, ${squareSideLength})`}
         >
           {room.board.squares.map((value, squareNum) => {
             const handleClick = (e: any) => {
@@ -60,11 +79,14 @@ export const MinesGame: React.FC<MinesGameProps> = ({ room, socket }) => {
             return <Square key={squareNum} value={value} onClick={handleClick} />
           })}
         </Grid>{" "}
-        <Flex direction="column">
+        <Flex direction="column" m={2}>
+          <Text>Bombs left: {room.board.bombCounter}</Text>
+          <Text mb={4}>Time passed: {room.timer}</Text>
           <Button
             onClick={() => {
               socket?.emit("mines-reset-board")
             }}
+            mb={2}
           >
             Reset
           </Button>
@@ -74,18 +96,34 @@ export const MinesGame: React.FC<MinesGameProps> = ({ room, socket }) => {
                 Settings
                 <AccordionIcon />
               </AccordionButton>
-              {/* TODO: put in radio comparable to rps radio */}
               <AccordionPanel>
-                <MyRadioGroup
-                  selectedValue={selectedPreset}
-                  setSelectedValue={setSelectedPreset}
-                  lockedIn={false}
-                />
+                <Flex direction="column">
+                  <MyRadioGroup
+                    selectedValue={selectedPreset}
+                    setSelectedValue={setSelectedPreset}
+                    lockedIn={false}
+                  />
+                  {selectedPreset === "custom" && (
+                    <Box my={4}>
+                      <CustomSettingsForm
+                        {...{ customSettings, setCustomSettings }}
+                        onSubmit={() => {
+                          console.log("awefoijfaweoijfaew", {
+                            preset: selectedPreset,
+                            ...customSettings,
+                          })
+                          socket?.emit("mines-change-settings", {
+                            preset: selectedPreset,
+                            ...customSettings,
+                          })
+                        }}
+                      />
+                    </Box>
+                  )}
+                </Flex>
               </AccordionPanel>
             </AccordionItem>
           </Accordion>
-          <Text>Bombs left: {room.board.bombCounter}</Text>
-          <Text>Time passed: {room.timer}</Text>
         </Flex>
       </Flex>
     </>
@@ -186,3 +224,75 @@ const MyRadio = ({ value, selectedValue, setSelectedValue, disabled }) => {
     </Flex>
   )
 }
+
+const CustomSettingsForm: React.FC<{
+  customSettings:
+    | {
+        width: number
+        height: number
+        numberOfBombs: number
+      }
+    | undefined
+  setCustomSettings: React.Dispatch<
+    React.SetStateAction<
+      | {
+          width: number
+          height: number
+          numberOfBombs: number
+        }
+      | undefined
+    >
+  >
+  onSubmit: () => void
+}> = ({ customSettings, setCustomSettings, onSubmit }) => {
+  return (
+    <Box>
+      <Text textColor="red" fontSize="xs" mb={2}>
+        Warning: Custom settings can get pretty glitchy.
+      </Text>
+      <Flex alignItems="center">
+        <Text mr={2}>Width:</Text>
+        <Input
+          type="number"
+          value={customSettings?.width}
+          size="sm"
+          onChange={(e) => {
+            const realValue = Math.min(parseInt(e.target.value.replace(/\D/g, "")), 200)
+            setCustomSettings((settings) => ({ ...settings!, width: realValue }))
+          }}
+        />
+      </Flex>
+      <Flex alignItems="center">
+        <Text mr={2}>Height:</Text>
+        <Input
+          type="number"
+          value={customSettings?.height}
+          size="sm"
+          onChange={(e) => {
+            const realValue = Math.min(parseInt(e.target.value.replace(/\D/g, "")), 200)
+            setCustomSettings((settings) => ({ ...settings!, height: realValue }))
+          }}
+        />
+      </Flex>
+      <Flex alignItems="center">
+        <Text mr={2}>Bombs:</Text>
+        <Input
+          type="number"
+          value={customSettings?.numberOfBombs}
+          size="sm"
+          onChange={(e) => {
+            const realValue = Math.min(parseInt(e.target.value.replace(/\D/g, "")), 200)
+            setCustomSettings((settings) => ({ ...settings!, numberOfBombs: realValue }))
+          }}
+        />
+      </Flex>
+      <Flex justifyContent={"center"} alignItems={"center"}>
+        <Button colorScheme={"blue"} onClick={onSubmit}>
+          Submit
+        </Button>
+      </Flex>
+    </Box>
+  )
+}
+
+const CustomSettingsField = () => {}

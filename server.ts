@@ -112,12 +112,20 @@ blitzApp.prepare().then(async () => {
     socket.on(
       "mines-change-settings",
       ({ preset, height, width, numberOfBombs }: MinesChangeSettingsParameters) => {
+        if (timers[roomCode]) {
+          clearInterval(timers[roomCode]!)
+          delete timers[roomCode]
+        }
         ;(rooms[roomCode] as MinesRoom).changeSettings({ preset, height, width, numberOfBombs })
         privateUpdateToAll(rooms[roomCode]!)
       }
     )
 
     socket.on("mines-reset-board", () => {
+      if (timers[roomCode]) {
+        clearInterval(timers[roomCode]!)
+        delete timers[roomCode]
+      }
       ;(rooms[roomCode] as MinesRoom).resetBoard()
       privateUpdateToAll(rooms[roomCode]!)
     })
@@ -140,8 +148,10 @@ blitzApp.prepare().then(async () => {
         gameStatusBefore === "in progress" &&
         (gameStatusAfter === "lost" || gameStatusAfter === "won")
       ) {
-        clearInterval(timers[roomCode]!)
-        delete timers[roomCode]
+        if (timers[roomCode]) {
+          clearInterval(timers[roomCode]!)
+          delete timers[roomCode]
+        }
       }
     })
 

@@ -1,4 +1,10 @@
-set /p version=What should the version be?
+@echo off
+
+echo old versions:
+docker image ls parkerbedlan/sloper
+
+echo.
+set /p version="What should the next version be? "
 
 docker build -t parkerbedlan/sloper:%version% --build-arg DATABASE_URL=postgres://foo .
 docker push parkerbedlan/sloper:%version%

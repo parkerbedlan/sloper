@@ -12,6 +12,11 @@ const Home: BlitzPage = () => {
   return (
     <Wrapper variant="small">
       <Flex direction="column">
+        <Flex justifyContent={"center"}>
+          <Text fontSize={"6xl"} fontFamily={"brand"}>
+            s\oper
+          </Text>
+        </Flex>
         <Box borderBottom="1px" py={10}>
           <Flex justifyContent={"center"}>
             <Button w={"80%"} colorScheme={"blue"} onClick={() => router.push(Routes.CreateRoom())}>

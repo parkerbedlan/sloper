@@ -30,6 +30,7 @@
     "@chakra-ui/react": "1.7.3",
     "@emotion/react": "11.7.1",
     "@emotion/styled": "11.6.0",
+    "@fontsource/titillium-web": "4.5.1",
     "@prisma/client": "3.7.0",
     "blitz": "0.44.4",
     "express": "4.17.2",

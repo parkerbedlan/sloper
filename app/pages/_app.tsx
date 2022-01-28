@@ -11,11 +11,20 @@ import {
 import { ChakraProvider } from "@chakra-ui/react"
 import { Suspense } from "react"
 
+import { extendTheme } from "@chakra-ui/react"
+import "@fontsource/titillium-web/700.css"
+
+const theme = extendTheme({
+  fonts: {
+    brand: "Titillium Web",
+  },
+})
+
 export default function App({ Component, pageProps }: AppProps) {
   const getLayout = Component.getLayout || ((page) => page)
 
   return (
-    <ChakraProvider>
+    <ChakraProvider theme={theme}>
       <Suspense fallback={<div>Loading...</div>}>
         <ErrorBoundary
           FallbackComponent={RootErrorFallback}

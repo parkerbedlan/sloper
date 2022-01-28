@@ -2,7 +2,7 @@
 
 import { CurrentUser, Room } from "./internal"
 
-export type GameStatus = "ready" | "in progress" | "lost" | "won"
+export type MinesGameStatus = "ready" | "in progress" | "lost" | "won"
 
 export type MinesSquareOption = "_" | "?" | "flag" | number | "blownup" | "wrong" | "bomb"
 export const minesPresets = ["beginner", "intermediate", "expert", "custom"] as const
@@ -17,7 +17,7 @@ export type MinesChangeSettingsParameters = {
 
 export class MinesRoom extends Room {
   status: "lobby" | "game" = "game"
-  gameStatus: GameStatus
+  gameStatus: MinesGameStatus
   settings: {
     preset: MinesPreset
     height: number
@@ -219,7 +219,7 @@ export class MinesRoom extends Room {
 }
 
 export type MinesRoomData = {
-  gameStatus: GameStatus
+  gameStatus: MinesGameStatus
   settings: {
     preset: "beginner" | "intermediate" | "expert" | "custom"
     height: number

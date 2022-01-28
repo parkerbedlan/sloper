@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Stack, Text, useRadio, useRadioGroup } from "@chakra-ui/react"
+import { Box, Button, Flex, Image, Stack, Text, useRadio, useRadioGroup } from "@chakra-ui/react"
 import { NameField } from "app/auth/components/SignupForm"
 import { MineIcon } from "app/core/components/icons/MineIcon"
 import { ScissorsIcon } from "app/core/components/icons/ScissorsIcon"
@@ -15,6 +15,7 @@ const gameSelections = [
   { gameName: "Rock Paper Scissors", icon: <ScissorsIcon mr={2} /> },
   { gameName: "Tic Tac Toe", icon: <TicTacToeIcon mr={2} /> },
   { gameName: "Minesweeper", icon: <MineIcon mr={2} /> },
+  { gameName: "War", icon: <Image src="/war.png" alt="War" width="1em" height="1em" mr={2} /> },
   // { gameName: "Prisoner's Dilemma", icon: <PrisonerIcon mr={2} /> },
   // { gameName: "Chess", icon: <ChessIcon mr={2} /> },
 ]

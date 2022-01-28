@@ -6,7 +6,6 @@ import Page404 from "./404"
 
 const Test: BlitzPage = () => {
   if (process.env.NODE_ENV !== "development") return <Page404 />
-
   return (
     <>
       <OpponentHands numberOfPlayers={2} />
@@ -19,11 +18,7 @@ const Test: BlitzPage = () => {
         bgColor="green.600"
         h="100vh"
       >
-        <Box m={4}>
-          <CardPile amount={52} cardWidth={6} topCardValue="KH" />
-        </Box>
-        <Card cardWidth={6} cardValue="AS" onClick={() => console.log("AS")} />
-        <CardPile cardValues={["AD", "KC", "QH", "JS", "TD", "7S"]} spaced cardWidth={6} />
+        <Card cardValue={"AS"} />
       </Flex>
     </>
   )
@@ -113,6 +108,8 @@ const Card: React.FC<
       height={height}
       padding={"1"}
       cursor={props.onClick ? "pointer" : "default"}
+      userSelect={"none"}
+      onContextMenu={(e) => e.preventDefault()}
       {...props}
     >
       {!cardValue ? (

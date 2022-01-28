@@ -15,19 +15,21 @@ export type Message = { roomCode: string; text: string; authorName: string }
 
 export type PlayerName = string
 
-export const gameTypes = ["Rock Paper Scissors", "Tic Tac Toe", "Minesweeper"] as const
+export const gameTypes = ["Rock Paper Scissors", "Tic Tac Toe", "Minesweeper", "War"] as const
 export type GameType = typeof gameTypes[number]
 
 export const playerMins = {
   "Rock Paper Scissors": 2,
   "Tic Tac Toe": 2,
   Minesweeper: 1,
+  War: 2,
 }
 
 export const playerCaps = {
   "Rock Paper Scissors": 2,
   "Tic Tac Toe": 2,
   Minesweeper: 10,
+  War: 2,
   // "Prisoner's Dilemma": 10,
   // Chess: 2,
 }

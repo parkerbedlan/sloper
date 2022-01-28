@@ -13,6 +13,7 @@ import {
   MinesRoom,
   MinesChangeSettingsParameters,
 } from "fullstackUtils/internal"
+import { WarRoom } from "fullstackUtils/war"
 import * as http from "http"
 import * as socketio from "socket.io"
 
@@ -158,6 +159,23 @@ blitzApp.prepare().then(async () => {
     socket.on("mines-right-click", (squareNum: number) => {
       ;(rooms[roomCode] as MinesRoom).rightClick(squareNum)
       privateUpdateToAll(rooms[roomCode]!)
+    })
+
+    socket.on("war-reset", () => {
+      const room = rooms[roomCode] as WarRoom
+      room.resetBoard()
+    })
+
+    socket.on("war-flip", (amount: 1 | 2) => {
+      const room = rooms[roomCode] as WarRoom
+      room.flip(currentUser.name, amount)
+      privateUpdateToAll(room)
+      if (room.gameStatus === "wait") {
+        setTimeout(() => {
+          room.claimSpoils()
+          privateUpdateToAll(room)
+        }, 3000)
+      }
     })
 
     socket.on("disconnect", () => {

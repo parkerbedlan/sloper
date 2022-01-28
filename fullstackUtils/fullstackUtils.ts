@@ -27,7 +27,7 @@ export const playerMins = {
 export const playerCaps = {
   "Rock Paper Scissors": 2,
   "Tic Tac Toe": 2,
-  Minesweeper: 3,
+  Minesweeper: 10,
   // "Prisoner's Dilemma": 10,
   // Chess: 2,
 }

@@ -1,5 +1,4 @@
-import { CurrentUser, PlayerName } from "./internal"
-import { Room } from "./internal"
+import { CurrentUser, PlayerName, Room } from "./internal"
 
 export type WarGameStatus = "ready" | "in progress" | "wait" | "finished"
 
@@ -25,7 +24,7 @@ export class WarRoom extends Room {
   }
 
   constructor(code: string, players: CurrentUser[]) {
-    super(code, "Minesweeper", players)
+    super(code, "War", players)
     this.resetBoard()
   }
 
@@ -60,20 +59,32 @@ export class WarRoom extends Room {
     this.gameStatus = "ready"
   }
 
-  flip(playerName: PlayerName, amount: 1 | 2) {
+  flip(playerName: PlayerName) {
+    const playerNames = Object.keys(this.board.playerCards)
+    const otherPlayerName = playerNames.find((n) => n !== playerName)!
+    if (
+      this.board.playerCards[playerName]!.played.length >
+        this.board.playerCards[otherPlayerName]!.played.length ||
+      this.gameStatus === "wait" ||
+      this.gameStatus === "finished"
+    )
+      return
+
+    let playedCardsAmts = Object.values(this.board.playerCards).map(
+      (playerCard) => playerCard.played.length
+    )
+    const amount = playedCardsAmts.some((amt) => amt === 0) ? 1 : 2
     for (let i = 0; i < amount; i++) {
       if (this.board.playerCards[playerName]?.hand.length === 0) {
         this.gameStatus = "finished"
-        this.board.winner = this.players
-          .map((player) => player.name)
-          .find((name) => name !== playerName)!
+        this.board.winner = otherPlayerName
         return
       }
       this.board.playerCards[playerName]!.played.push(
         this.board.playerCards[playerName]!.hand.pop()!
       )
     }
-    const playedCardsAmts = Object.values(this.board.playerCards).map(
+    playedCardsAmts = Object.values(this.board.playerCards).map(
       (playerCard) => playerCard.played.length
     )
     if (playedCardsAmts[0] === playedCardsAmts[1]) {
@@ -84,7 +95,7 @@ export class WarRoom extends Room {
   }
 
   claimSpoils() {
-    const playerNames = this.players.map((p) => p.name)
+    const playerNames = Object.keys(this.board.playerCards)
 
     const strengthToPlayer = Object.fromEntries(
       playerNames.map((name) => {
@@ -100,15 +111,22 @@ export class WarRoom extends Room {
     )
     const strengths = Object.keys(strengthToPlayer).map((strength) => parseInt(strength))
 
-    if (strengths[0] !== strengths[1]) {
-      const allPlayed = playerNames.flatMap((name) => {
+    // if they're the same, then they merge into one strength
+    if (strengths.length > 1) {
+      let allPlayed: (string | string[])[] = playerNames.map((name) => {
         const copy = this.board.playerCards[name]!.played.slice(0)
         this.board.playerCards[name]!.played = []
         return copy
       })
+      if (Math.floor(Math.random() * 2) === 1) {
+        const temp = allPlayed[0]!
+        allPlayed[0] = allPlayed[1]!
+        allPlayed[1] = temp
+      }
+      allPlayed = allPlayed.flat()
 
       const claimer = strengthToPlayer[Math.max(...strengths)]!
-      this.board.playerCards[claimer]?.hand.unshift(...allPlayed)
+      this.board.playerCards[claimer]?.hand.unshift(...(allPlayed as string[]))
     }
 
     this.gameStatus = "in progress"

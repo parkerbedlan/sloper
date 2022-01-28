@@ -4,8 +4,10 @@ import Layout from "app/core/layouts/Layout"
 import { MinesGame } from "app/game/mines/MinesGame"
 import { RPSGame } from "app/game/rps/RPSGame"
 import { TTTGame } from "app/game/ttt/TTTGame"
+import { WarGame } from "app/game/war/WarGame"
 import { BlitzPage, Routes, useRouter } from "blitz"
 import { MinesRoomData, RPSRoomData, TTTRoomData } from "fullstackUtils/internal"
+import { WarRoomData } from "fullstackUtils/internal"
 import React, { useEffect } from "react"
 import { useRoomState } from "../../core/hooks/useRoomState"
 import Page404 from "../404"
@@ -44,6 +46,8 @@ const Game: BlitzPage = () => {
         <MinesGame {...{ room: room as MinesRoomData, socket }} />
       </Box>
     )
+  else if (room.gameType === "War")
+    gameNode = <WarGame {...{ room: room as WarRoomData, socket }} />
 
   return <>{gameNode}</>
 }

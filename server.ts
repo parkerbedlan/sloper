@@ -113,36 +113,39 @@ blitzApp.prepare().then(async () => {
     socket.on(
       "mines-change-settings",
       ({ preset, height, width, numberOfBombs }: MinesChangeSettingsParameters) => {
+        const room = rooms[roomCode] as MinesRoom
         if (timers[roomCode]) {
           clearInterval(timers[roomCode]!)
           delete timers[roomCode]
         }
-        ;(rooms[roomCode] as MinesRoom).changeSettings({ preset, height, width, numberOfBombs })
+        room.changeSettings({ preset, height, width, numberOfBombs })
         privateUpdateToAll(rooms[roomCode]!)
       }
     )
 
     socket.on("mines-reset-board", () => {
+      const room = rooms[roomCode] as MinesRoom
       if (timers[roomCode]) {
         clearInterval(timers[roomCode]!)
         delete timers[roomCode]
       }
-      ;(rooms[roomCode] as MinesRoom).resetBoard()
+      room.resetBoard()
       privateUpdateToAll(rooms[roomCode]!)
     })
 
     socket.on("mines-left-click", (squareNum: number) => {
-      const gameStatusBefore = (rooms[roomCode] as MinesRoom).gameStatus
+      const room = rooms[roomCode] as MinesRoom
+      const gameStatusBefore = room.gameStatus
 
-      ;(rooms[roomCode] as MinesRoom).leftClick(squareNum)
+      room.leftClick(squareNum)
       privateUpdateToAll(rooms[roomCode]!)
 
-      const gameStatusAfter = (rooms[roomCode] as MinesRoom).gameStatus
+      const gameStatusAfter = room.gameStatus
 
       if (gameStatusBefore === "ready" && gameStatusAfter === "in progress") {
         if (!timers[roomCode]) {
           timers[roomCode] = setInterval(() => {
-            io.to(roomCode).emit("tick", (rooms[roomCode] as MinesRoom).tick())
+            io.to(roomCode).emit("tick", room.tick())
           }, 1000)
         }
       } else if (
@@ -157,24 +160,28 @@ blitzApp.prepare().then(async () => {
     })
 
     socket.on("mines-right-click", (squareNum: number) => {
-      ;(rooms[roomCode] as MinesRoom).rightClick(squareNum)
-      privateUpdateToAll(rooms[roomCode]!)
+      const room = rooms[roomCode] as MinesRoom
+      room.rightClick(squareNum)
+      privateUpdateToAll(room)
     })
 
     socket.on("war-reset", () => {
       const room = rooms[roomCode] as WarRoom
       room.resetBoard()
+      privateUpdateToAll(room)
     })
 
-    socket.on("war-flip", (amount: 1 | 2) => {
+    socket.on("war-flip", () => {
       const room = rooms[roomCode] as WarRoom
-      room.flip(currentUser.name, amount)
+      if (room.gameStatus === "wait") return
+      room.flip(currentUser.name)
       privateUpdateToAll(room)
+      // @ts-ignore
       if (room.gameStatus === "wait") {
         setTimeout(() => {
           room.claimSpoils()
           privateUpdateToAll(room)
-        }, 3000)
+        }, 500)
       }
     })
 

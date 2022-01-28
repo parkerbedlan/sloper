@@ -1,4 +1,4 @@
-import { MinesRoom, RPSRoom, TTTRoom } from "./internal"
+import { MinesRoom, RPSRoom, TTTRoom, WarRoom } from "./internal"
 
 export type CurrentUser = {
   role: string
@@ -66,7 +66,9 @@ export class Room {
     } else if (this.gameType === "Tic Tac Toe") {
       return new TTTRoom(this.code, this.players)
     } else if (this.gameType === "Minesweeper") {
-      return new MinesRoom(this.code, this.players) // TODO: change this to MinesRoom
+      return new MinesRoom(this.code, this.players)
+    } else if (this.gameType === "War") {
+      return new WarRoom(this.code, this.players)
     }
     return this
   }

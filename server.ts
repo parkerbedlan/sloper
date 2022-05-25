@@ -16,6 +16,10 @@ import {
 import { WarRoom } from "fullstackUtils/war"
 import * as http from "http"
 import * as socketio from "socket.io"
+import os from "os"
+export const getLANipAddress = () => {
+  return os.networkInterfaces()["Wi-Fi"]?.find((ip) => ip.family === "IPv4")!.address
+}
 
 const { PORT = "3000" } = process.env
 const dev = process.env.NODE_ENV !== "production"
@@ -199,6 +203,9 @@ blitzApp.prepare().then(async () => {
 
   app.all("*", (req: any, res: any) => blitzHandler(req, res))
 
+  // server.listen(PORT, getLANipAddress() as any, () => {
+  //   console.log(`> Ready on http://${getLANipAddress()}:${PORT}`)
+  // })
   server.listen(PORT, () => {
     console.log(`> Ready on http://localhost:${PORT}`)
   })
